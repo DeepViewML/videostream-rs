@@ -1,0 +1,29 @@
+[package]
+name = "videostream"
+description = "VideoStream Library provides zero-copy video frame management and distribution across processes and containers."
+authors = ["Au-Zone Technologies"]
+readme = "README.md"
+license-file = "LICENSE.txt"
+homepage = "https://support.deepviewml.com"
+repository = "https://github.com/DeepViewML/videostream-rs"
+documentation = "https://docs.rs/videostream"
+keywords = ["deepview", "visionpack"]
+categories = ["computer-vision", "multimedia::video", "api-bindings"]
+version = "0.1.0"
+edition = "2021"
+
+exclude = [
+    "/.github/*",
+    "/.gitattributes",
+    "/clippy.toml",
+    "/codecov.yml",
+]
+
+[lib]
+name = "videostream"
+
+[workspace]
+members = ["videostream-sys"]
+
+[dependencies]
+videostream-sys = {version = "^0.1.0", path = "./videostream-sys"}

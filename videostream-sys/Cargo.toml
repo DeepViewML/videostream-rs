@@ -1,0 +1,15 @@
+[package]
+name = "videostream-sys"
+description = "Low-level FFI bindings for VideoStream Library"
+readme = "README.md"
+license-file = "LICENSE.txt"
+homepage = "https://support.deepviewml.com"
+repository = "https://github.com/DeepViewML/videostream-rs"
+documentation = "https://docs.rs/videostream"
+keywords = ["deepview", "visionpack"]
+categories = ["computer-vision", "multimedia::video", "external-ffi-bindings"]
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libc = "^0.2"
