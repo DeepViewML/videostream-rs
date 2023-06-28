@@ -1,11 +1,10 @@
+use crate::NullStringError;
 use std::error::Error;
 use std::ffi::{CStr, CString};
 use std::io;
 use std::os::unix::prelude::OsStrExt;
 use std::path::{Path, PathBuf};
 use videostream_sys as ffi;
-use crate::NullStringError;
-
 
 /// The Host structure provides the frame sharing functionality.  Only a single
 /// host can own frames while a host can have many Client subscribers to the
@@ -20,7 +19,7 @@ pub struct Host {
 impl Host {
     /// Creates a new Host and creates a socket at the specified path on which
     /// it will listen for client connections.
-    pub fn new<P: AsRef<Path>> (path: P) -> Result<Self, Box<dyn Error>> {
+    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn Error>> {
         let path_str_c = CString::new(path.as_ref().as_os_str().as_bytes())?;
         let ptr = unsafe { ffi::vsl_host_init(path_str_c.as_ptr()) };
         if ptr.is_null() {
@@ -46,8 +45,6 @@ impl Host {
     pub fn process(&self) {}
 
     pub fn sockets(&self) {}
-
-	
 }
 
 impl Drop for Host {

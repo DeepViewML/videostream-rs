@@ -10,8 +10,8 @@
 //! [`DeepView Support Portal`]: https://support.deepviewml.com
 
 use std::error::Error;
-use std::fmt;
 use std::ffi::CStr;
+use std::fmt;
 use videostream_sys as ffi;
 /// The frame module provides the common frame handling functionality.
 pub mod frame;
@@ -34,12 +34,12 @@ impl fmt::Display for NullStringError {
 }
 
 pub fn version() -> &'static str {
-	let cstr = unsafe { CStr::from_ptr(ffi::vsl_version()) };
-	return cstr.to_str().unwrap();
+    let cstr = unsafe { CStr::from_ptr(ffi::vsl_version()) };
+    return cstr.to_str().unwrap();
 }
 
 pub fn timestamp() -> i64 {
-	return unsafe { ffi::vsl_timestamp() };
+    return unsafe { ffi::vsl_timestamp() };
 }
 
 #[cfg(test)]
