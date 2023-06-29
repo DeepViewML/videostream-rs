@@ -6,6 +6,10 @@ This crate provides a safe Rust API for the VideoStream Library which is part of
 
 - libvideostream version 1.3.0 or newer.
 
+# Licensing
+
+The Rust bindings are dual-licensed under the AGPL-3.0 or the DeepView AI Middleware License (trial or full commercial license).  Please contact Au-Zone Technologies at info@au-zone.com for licensing inquires.
+
 # Quick Start
 
 Make sure you have the native videostream library installed, version 1.3.0 or newer is required.
