@@ -25,5 +25,6 @@ name = "videostream"
 [workspace]
 members = ["videostream-sys"]
 
-[dependencies]
-videostream-sys = {version = "^0.1.0", path = "./videostream-sys"}
+[dependencies.videostream-sys]
+path = "videostream-sys"
+version = "^0.1.0"
