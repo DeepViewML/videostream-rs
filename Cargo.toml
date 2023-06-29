@@ -28,4 +28,4 @@ members = ["videostream-sys"]
 
 [dependencies.videostream-sys]
 path = "videostream-sys"
-version = "^0.1.0"
+version = "^0.2.0"
