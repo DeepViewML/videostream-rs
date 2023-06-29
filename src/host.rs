@@ -1,11 +1,10 @@
+use crate::NullStringError;
 use std::error::Error;
 use std::ffi::{CStr, CString};
 use std::io;
 use std::os::unix::prelude::OsStrExt;
 use std::path::{Path, PathBuf};
 use videostream_sys as ffi;
-
-use crate::NullStringError;
 
 /// The Host structure provides the frame sharing functionality.  Only a single
 /// host can own frames while a host can have many Client subscribers to the
