@@ -148,9 +148,11 @@
 
 #define VSL_VERSION_1_0 VSL_VERSION_ENCODE(1, 0, 0)
 #define VSL_VERSION_1_1 VSL_VERSION_ENCODE(1, 1, 0)
+#define VSL_VERSION_1_2 VSL_VERSION_ENCODE(1, 2, 0)
+#define VSL_VERSION_1_3 VSL_VERSION_ENCODE(1, 3, 0)
 
 #ifndef VSL_TARGET_VERSION
-#define VSL_TARGET_VERSION VSL_VERSION_1_1
+#define VSL_TARGET_VERSION VSL_VERSION_1_3
 #endif
 
 #if VSL_TARGET_VERSION < VSL_VERSION_ENCODE(1, 0, 0)
@@ -175,9 +177,31 @@
     VSL_DEPRECATED_FOR(1.1, replacement)
 #endif
 
-#define VSL_FOURCC(a, b, c, d)                                      \
-    ((uint32_t)(a) | ((uint32_t)(b) << 8) | ((uint32_t)(c) << 16) | \
-     ((uint32_t)(d) << 24))
+#if VSL_TARGET_VERSION < VSL_VERSION_ENCODE(1, 2, 0)
+#define VSL_AVAILABLE_SINCE_1_2 VSL_UNAVAILABLE(1.2)
+#define VSL_DEPRECATED_SINCE_1_2
+#define VSL_DEPRECATED_SINCE_1_2_FOR(replacement)
+#else
+#define VSL_AVAILABLE_SINCE_1_2
+#define VSL_DEPRECATED_SINCE_1_2 VSL_DEPRECATED(1.2)
+#define VSL_DEPRECATED_SINCE_1_2_FOR(replacement) \
+    VSL_DEPRECATED_FOR(1.2, replacement)
+#endif
+
+#if VSL_TARGET_VERSION < VSL_VERSION_ENCODE(1, 3, 0)
+#define VSL_AVAILABLE_SINCE_1_3 VSL_UNAVAILABLE(1.3)
+#define VSL_DEPRECATED_SINCE_1_3
+#define VSL_DEPRECATED_SINCE_1_3_FOR(replacement)
+#else
+#define VSL_AVAILABLE_SINCE_1_3
+#define VSL_DEPRECATED_SINCE_1_3 VSL_DEPRECATED(1.3)
+#define VSL_DEPRECATED_SINCE_1_3_FOR(replacement) \
+    VSL_DEPRECATED_FOR(1.3, replacement)
+#endif
+
+#define VSL_FOURCC(a, b, c, d)                                         \
+    ((uint32_t) (a) | ((uint32_t) (b) << 8) | ((uint32_t) (c) << 16) | \
+     ((uint32_t) (d) << 24))
 
 #ifdef __cplusplus
 extern "C" {
@@ -199,6 +223,29 @@ typedef struct vsl_client VSLClient;
  * or client perspective.  Certain API are only available to the host or client.
  */
 typedef struct vsl_frame VSLFrame;
+
+/**
+ * The VSLRect structure represents a rectangle region of a frame and is used to
+ * define cropping regions for sub-frames.
+ */
+typedef struct vsl_rect {
+    /**
+     * The left-most pixel offset for the rectangle.
+     */
+    int x;
+    /**
+     * The top-most pixel offset for the rectangle.
+     */
+    int y;
+    /**
+     * The width in pixels of the rectangle.  The end position is x+width.
+     */
+    int width;
+    /**
+     * The height in pixels of the rectangle.  The end position is y+height.
+     */
+    int height;
+} VSLRect;
 
 /**
  * Function pointer definition which will be called as part of
@@ -315,6 +362,19 @@ vsl_host_sockets(VSLHost* host,
                  size_t*  max_sockets);
 
 /**
+ * Registers the frame with the host and publishes it to subscribers.
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_host_post(VSLHost*  host,
+              VSLFrame* frame,
+              int64_t   expires,
+              int64_t   duration,
+              int64_t   pts,
+              int64_t   dts);
+
+/**
  * Creates a client and connects to the host at the provided path.  If the
  * connection cannot be made NULL is returned and errno is set.
  *
@@ -337,9 +397,9 @@ void
 vsl_client_release(VSLClient* client);
 
 /**
- * Disconnects from the VSLHost and stops all reconnection attempts.  This should
- * be called as part of closing down a VSL client session.  It is thread-safe
- * unlike vsl_client_release which disposes of the client object.
+ * Disconnects from the VSLHost and stops all reconnection attempts.  This
+ * should be called as part of closing down a VSL client session.  It is
+ * thread-safe unlike vsl_client_release which disposes of the client object.
  *
  * @memberof VSLClient
  * @since 1.1
@@ -381,37 +441,116 @@ void
 vsl_client_set_timeout(VSLClient* client, float timeout);
 
 /**
- * Registers the video frame along with optional user pointer to any
+ * Creates and posts the video frame along with optional user pointer to any
  * arbitrary data.  Typically it would be used for holding a reference to
  * the host's view of the frame handle.
  *
+ * @deprecated The vsl_frame_register function is deprecated in favour of using
+ * the @ref vsl_frame_init(), @ref vsl_frame_alloc() or @ref vsl_frame_attach(),
+ * and @ref vsl_host_post() functions which separate frame creation from posting
+ * to the host for publishing to subscribers.
+ *
  * @memberof VSLFrame
  */
-VSL_AVAILABLE_SINCE_1_0 VSL_API VSLFrame*
-                                vsl_frame_register(VSLHost*          host,
-                                                   int64_t           serial,
-                                                   int               handle,
-                                                   int               width,
-                                                   int               height,
-                                                   uint32_t          fourcc,
-                                                   size_t            size,
-                                                   size_t            offset,
-                                                   int64_t           expires,
-                                                   int64_t           duration,
-                                                   int64_t           pts,
-                                                   int64_t           dts,
-                                                   vsl_frame_cleanup cleanup,
-                                                   void*             userptr);
+VSL_DEPRECATED_SINCE_1_3
+VSL_AVAILABLE_SINCE_1_0
+VSL_API
+VSLFrame*
+vsl_frame_register(VSLHost*          host,
+                   int64_t           serial,
+                   int               handle,
+                   int               width,
+                   int               height,
+                   uint32_t          fourcc,
+                   size_t            size,
+                   size_t            offset,
+                   int64_t           expires,
+                   int64_t           duration,
+                   int64_t           pts,
+                   int64_t           dts,
+                   vsl_frame_cleanup cleanup,
+                   void*             userptr);
+
+/**
+ * Initializes a VSLFrame without underlying frame buffer.  To create the
+ * backing memory either call @ref vsl_frame_alloc() or to attach to an existing
+ * bufer use @ref vsl_frame_attach().
+ *
+ * @since 1.3
+ * @memberof VSLFrame
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+VSLFrame*
+vsl_frame_init(uint32_t          width,
+               uint32_t          height,
+               uint32_t          stride,
+               uint32_t          fourcc,
+               void*             userptr,
+               vsl_frame_cleanup cleanup);
+
+/**
+ * Allocates the underlying memory for the frame.  This function will prefer to
+ * allocate using dmabuf and fallback to shared memory if dmabuf is not
+ * available, unless the frame has a path defined in which case shared memory is
+ * assumed.
+ *
+ * @since 1.3
+ * @memberof VSLFrame
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_frame_alloc(VSLFrame* frame);
+
+/**
+ * Attach the provided file descriptor to the VSLFrame.  If size is not provided
+ * it is assumed to be stride*height bytes.  If offset is provided then size
+ * *MUST* be provided, the offset is in bytes to the start of the frame.
+ *
+ * @since 1.3
+ * @memberof VSLFrame
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_frame_attach(VSLFrame* frame, int fd, size_t size, size_t offset);
 
 /**
  * Unregisters the frame, removing it from the host pool.
  *
+ * @deprecated This function is deprecated in favour of calling
+ * @ref vsl_frame_release() which will handle the required cleanup.
+ *
  * @memberof VSLFrame
  */
+VSL_DEPRECATED_SINCE_1_3_FOR(vsl_frame_release)
 VSL_AVAILABLE_SINCE_1_0
 VSL_API
 void
 vsl_frame_unregister(VSLFrame* frame);
+
+/**
+ * Copy the source frame into the target frame, with optional source crop. The
+ * copy handles format conversion, rescaling to fit the target frame.  Resize
+ * happens after the crop, if required.
+ *
+ * Copy can happen between any frames, regardless of whether they are parented
+ * or not or have differing parents.  The copy happens through the underlying
+ * buffers and will attempt to use available hardware accelerators.
+ *
+ * The function will attempt to lock target and source.  Since lock is a no-op
+ * when not a client frame it is safe even for free-standing frames.  Copying to
+ * or from a posted frame is safe but is likely to cause visual corruption such
+ * as tearing.
+ *
+ * @since 1.3
+ * @memberof VSLFrame
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_frame_copy(VSLFrame* target, VSLFrame* source, const VSLRect* crop);
 
 /**
  * Returns the user pointer associated with this frame.
@@ -445,8 +584,9 @@ VSLFrame*
 vsl_frame_wait(VSLClient* client, int64_t until);
 
 /**
- * Releases a client side frame and frees any allocated memory.  You should
- * first unmap and unlock the video frame before releasing it.
+ * Releases the frame, performing required cleanup.  If the frame was mapped it
+ * will be unmapped.  If the frame was posted to a host it will be removed, if
+ * this is a client frame it will be unlocked.
  *
  * @memberof VSLFrame
  */

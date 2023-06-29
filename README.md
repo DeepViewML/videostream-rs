@@ -2,7 +2,13 @@
 
 This crate provides a safe Rust API for the VideoStream Library which is part of the VisionPack SDK and included as part of the overall DeepView AI Middleware offering.
 
+# Requirements
+
+- libvideostream version 1.3.0 or newer.
+
 # Quick Start
+
+Make sure you have the native videostream library installed, version 1.3.0 or newer is required.
 
 # DeepView AI Middleware
 
@@ -15,4 +21,4 @@ To learn about other Rust packages refer to [DeepView AI Middleware with Rust][1
 Professional support for DeepView AI Middleware, including this library, is provided by Au-Zone Technologies through the [DeepView Support Portal][2].
 
 [1]: https://support.deepviewml.com
-[1]: https://support.deepviewml.com
+[2]: https://support.deepviewml.com

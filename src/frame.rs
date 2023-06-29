@@ -3,6 +3,13 @@ use std::error::Error;
 use std::io;
 use videostream_sys as ffi;
 
+/// The Frame structure handles the frame and underlying framebuffer.  A frame
+/// can be an image or a single video frame, the distinction is not considered.
+///
+/// A frame can be created and used as a free-standing frame, which means it is
+/// not published through a Host nor was it created from a receiving Client. A
+/// free-standing frame can be mapped and copied to other frames which provides
+/// an optimized method for resizing or converting between formats.
 pub struct Frame {
     ptr: *mut ffi::VSLFrame,
 }
