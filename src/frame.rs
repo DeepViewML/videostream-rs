@@ -15,7 +15,24 @@ pub struct Frame {
 }
 
 impl Frame {
-    pub fn new(ptr: *mut ffi::VSLFrame) -> Result<Self, ()> {
+	pub fn new(width: u32, height: u32, stride: u32, fourcc: u32) -> Result<Self, ()> {
+		let ptr = unsafe { ffi::vsl_frame_init(width, height, stride, fourcc, std::ptr::null_mut(), None ) };
+
+		if ptr.is_null() {
+			return Err(());
+		}
+		return Ok(Frame { ptr });
+	}
+
+	pub fn alloc(&self) -> Result<(), Box<dyn Error>> {
+		let ret = unsafe { ffi::vsl_frame_alloc(self.ptr) } as i32;
+		
+		if ret == 0 { return Ok(()); }
+		let err = io::Error::last_os_error();
+		return Err(Box::new(err));
+	}
+
+    pub fn wrap(ptr: *mut ffi::VSLFrame) -> Result<Self, ()> {
         if ptr.is_null() {
             return Err(());
         }
@@ -23,17 +40,11 @@ impl Frame {
         return Ok(Frame { ptr });
     }
 
-    pub fn register() {}
 
-    pub fn unregister() {}
 
     pub fn wait(client: &client::Client, until: i64) -> Result<Self, Box<dyn Error>> {
         let wrapper = client.get_frame(until)?;
         return Ok(Frame { ptr: wrapper.ptr });
-    }
-
-    pub fn release(&self) {
-        unsafe { ffi::vsl_frame_release(self.ptr) };
     }
 
     pub fn trylock(&self) -> Result<(), Box<dyn Error>> {
@@ -116,4 +127,10 @@ impl Frame {
     pub fn get_ptr(&self) -> *mut ffi::VSLFrame {
         return self.ptr.clone();
     }
+}
+
+impl Drop for Frame {
+	fn drop(&mut self) {
+	    unsafe { ffi::vsl_frame_release(self.ptr) };
+	}
 }
