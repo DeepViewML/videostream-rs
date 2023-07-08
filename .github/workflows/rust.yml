@@ -62,4 +62,4 @@ jobs:
           git add Cargo.toml
           git commit -m "Deploy $GIT_VERSION"
       - name: Publish
-        run: cargo release publish --workspace
+        run: cargo release publish --workspace --execute
