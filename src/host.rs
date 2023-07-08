@@ -1,9 +1,11 @@
 use crate::NullStringError;
-use std::error::Error;
-use std::ffi::{CStr, CString};
-use std::io;
-use std::os::unix::prelude::OsStrExt;
-use std::path::{Path, PathBuf};
+use std::{
+    error::Error,
+    ffi::{CStr, CString},
+    io,
+    os::unix::prelude::OsStrExt,
+    path::{Path, PathBuf},
+};
 use videostream_sys as ffi;
 
 /// The Host structure provides the frame sharing functionality.  Only a single

@@ -7,7 +7,8 @@ fn test_host() {
     let host = Host::new(&path).unwrap();
     assert_eq!(path, host.path().unwrap());
     assert!(path.exists());
-    // Rust doesn't provide an is_socket but we at least confirm some things it is not.
+    // Rust doesn't provide an is_socket but we at least confirm some things it is
+    // not.
     assert!(!path.is_file());
     assert!(!path.is_dir());
     assert!(!path.is_symlink());

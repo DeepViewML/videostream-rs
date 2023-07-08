@@ -1,6 +1,5 @@
 use crate::client;
-use std::error::Error;
-use std::io;
+use std::{error::Error, io};
 use videostream_sys as ffi;
 
 /// The Frame structure handles the frame and underlying framebuffer.  A frame
