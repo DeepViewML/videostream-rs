@@ -47,6 +47,8 @@ jobs:
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     steps:
       - uses: actions/checkout@v2
+      - name: Dependencies
+        run: cargo install cargo-release
       - name: Parse Version
         run: echo GIT_VERSION=$(git describe --tags) >> $GITHUB_ENV
       - name: Deployment Branch
@@ -56,12 +58,10 @@ jobs:
           git checkout -b deploy_branch
       - name: Update Version
         run: |
-          sed -i 's/0.0.0/$GIT_VERSION/g' videostream-sys/Cargo.toml
+          sed -i "s/0.0.0/$GIT_VERSION/g" videostream-sys/Cargo.toml
           git add videostream-sys/Cargo.toml
-          sed -i 's/0.0.0/$GIT_VERSION/g' Cargo.toml
+          sed -i "s/0.0.0/$GIT_VERSION/g" Cargo.toml
           git add Cargo.toml
           git commit -m "Deploy $GIT_VERSION"
       - name: Publish
-        run: |
-          cargo install cargo-release
-          cargo release publish --workspace --execute
+        run: cargo release publish --workspace --execute
