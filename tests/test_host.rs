@@ -1,5 +1,5 @@
-use videostream::host::Host;
 use std::path::PathBuf;
+use videostream::host::Host;
 
 #[test]
 fn test_host() {

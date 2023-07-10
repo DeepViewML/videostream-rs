@@ -1,6 +1,7 @@
 use crate::client;
 use std::error::Error;
-use std::io;
+use std::ffi::CStr;
+use std::{io, slice};
 use videostream_sys as ffi;
 
 /// The Frame structure handles the frame and underlying framebuffer.  A frame
@@ -15,22 +16,29 @@ pub struct Frame {
 }
 
 impl Frame {
-	pub fn new(width: u32, height: u32, stride: u32, fourcc: u32) -> Result<Self, ()> {
-		let ptr = unsafe { ffi::vsl_frame_init(width, height, stride, fourcc, std::ptr::null_mut(), None ) };
+    pub fn new(width: u32, height: u32, stride: u32, fourcc: u32) -> Result<Self, Box<dyn Error>> {
+        let ptr = unsafe {
+            ffi::vsl_frame_init(width, height, stride, fourcc, std::ptr::null_mut(), None)
+        };
 
-		if ptr.is_null() {
-			return Err(());
-		}
-		return Ok(Frame { ptr });
-	}
+        if ptr.is_null() {
+            let err = io::Error::last_os_error();
+            return Err(Box::new(err));
+        }
+        return Ok(Frame { ptr });
+    }
 
-	pub fn alloc(&self) -> Result<(), Box<dyn Error>> {
-		let ret = unsafe { ffi::vsl_frame_alloc(self.ptr) } as i32;
-		
-		if ret == 0 { return Ok(()); }
-		let err = io::Error::last_os_error();
-		return Err(Box::new(err));
-	}
+    pub fn alloc(&self) -> Result<(), Box<dyn Error>> {
+        let path = unsafe { ffi::vsl_frame_path(self.ptr) };
+
+        let ret = unsafe { ffi::vsl_frame_alloc(self.ptr, path) } as i32;
+
+        if ret == 0 {
+            return Ok(());
+        }
+        let err = io::Error::last_os_error();
+        return Err(Box::new(err));
+    }
 
     pub fn wrap(ptr: *mut ffi::VSLFrame) -> Result<Self, ()> {
         if ptr.is_null() {
@@ -40,7 +48,9 @@ impl Frame {
         return Ok(Frame { ptr });
     }
 
-
+    pub fn release(&self) {
+        unsafe { ffi::vsl_frame_release(self.ptr) };
+    }
 
     pub fn wait(client: &client::Client, until: i64) -> Result<Self, Box<dyn Error>> {
         let wrapper = client.get_frame(until)?;
@@ -107,21 +117,69 @@ impl Frame {
         return unsafe { ffi::vsl_frame_size(self.ptr) as i32 }; //Needs work
     }
 
-    pub fn handle(&self) -> i32 {
+    pub fn handle(&self) -> Option<i32> {
         let handle: std::os::raw::c_int = unsafe { ffi::vsl_frame_handle(self.ptr) };
-        return handle as i32;
+        if handle == -1 {
+            return None;
+        }
+        return Some(handle as i32);
     }
 
     pub fn paddr(&self) -> isize {
         return unsafe { ffi::vsl_frame_paddr(self.ptr) };
     }
 
-    pub fn mmap(&self) {
-        //return unsafe { ffi::vsl_frame_mmap(self.ptr) }; //Needs work
+    pub fn path(&self) -> Option<&str> {
+        let ret = unsafe { ffi::vsl_frame_path(self.ptr) };
+        if ret.is_null() {
+            return None;
+        }
+        let path = unsafe {
+            match CStr::from_ptr(ret).to_str() {
+                Ok(path) => path,
+                Err(_) => {
+                    return None;
+                }
+            }
+        };
+        return Some(path);
+    }
+
+    pub fn mmap(&self) -> Result<&[u8], ()> {
+        if self.handle() == None {
+            return Err(());
+        }
+        let mut size: usize = 0;
+        let ptr = unsafe { ffi::vsl_frame_mmap(self.ptr, &mut size as *mut usize) };
+        if ptr.is_null() || size == 0 {
+            return Err(());
+        }
+        return Ok(unsafe { slice::from_raw_parts(ptr as *const u8, size) });
+    }
+
+    pub fn mmap_mut(&self) -> Result<&mut [u8], ()> {
+        if self.handle() == None {
+            return Err(());
+        }
+        let mut size: usize = 0;
+        let ptr = unsafe { ffi::vsl_frame_mmap(self.ptr, &mut size as *mut usize) };
+        if ptr.is_null() || size == 0 {
+            return Err(());
+        }
+        return Ok(unsafe { slice::from_raw_parts_mut(ptr as *mut u8, size) });
     }
 
     pub fn munmap(&self) {
-        //return unsafe { ffi::vsl_frame_munmap(self.ptr) };
+        return unsafe { ffi::vsl_frame_munmap(self.ptr) };
+    }
+
+    pub fn attach(&self, fd: i32, size: usize, offset: usize) -> Result<(), Box<dyn Error>> {
+        let ret = unsafe { ffi::vsl_frame_attach(self.ptr, fd, size, offset) };
+        if ret < -1 {
+            let err = io::Error::last_os_error();
+            return Err(Box::new(err));
+        }
+        return Ok(());
     }
 
     pub fn get_ptr(&self) -> *mut ffi::VSLFrame {
@@ -130,7 +188,7 @@ impl Frame {
 }
 
 impl Drop for Frame {
-	fn drop(&mut self) {
-	    unsafe { ffi::vsl_frame_release(self.ptr) };
-	}
+    fn drop(&mut self) {
+        unsafe { ffi::vsl_frame_release(self.ptr) };
+    }
 }

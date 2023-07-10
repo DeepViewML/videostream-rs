@@ -493,7 +493,20 @@ vsl_frame_init(uint32_t          width,
  * Allocates the underlying memory for the frame.  This function will prefer to
  * allocate using dmabuf and fallback to shared memory if dmabuf is not
  * available, unless the frame has a path defined in which case shared memory is
- * assumed.
+ * assumed.  If the path begins with /dev then it assumed to point to a
+ * dmabuf-heap device.  If path is NULL then the allocator will first attempt to
+ * create a dmabuf then fallback to shared memory.
+ *
+ * Allocations will be based on a buffer large enough to hold height*stride
+ * bytes.  If using a compressed fourcc such as JPEG the actual data will be
+ * smaller, this size can be captured when calling @ref vsl_frame_copy() as the
+ * function returns the number of bytes copied into the target frame.  There is
+ * currently no method to capture the actual compressed size when receiving an
+ * already compressed frame.  This limitation is because the size varies from
+ * frame to frame while the underlying buffer is of a fixed size.  When the
+ * actual encoded size is important, the @ref vsl_frame_copy() should be called
+ * directly or the reported size communicated to the client through a separate
+ * channel.
  *
  * @since 1.3
  * @memberof VSLFrame
@@ -501,7 +514,20 @@ vsl_frame_init(uint32_t          width,
 VSL_AVAILABLE_SINCE_1_3
 VSL_API
 int
-vsl_frame_alloc(VSLFrame* frame);
+vsl_frame_alloc(VSLFrame* frame, const char* path);
+
+/**
+ * Frees the allocated buffer for this frame.  Does not release the frame itself
+ * for that use @ref vsl_frame_release().
+ *
+ * @param frame
+ * @since 1.3
+ * @memberof VSLFrame
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+void
+vsl_frame_unalloc(VSLFrame* frame);
 
 /**
  * Attach the provided file descriptor to the VSLFrame.  If size is not provided
@@ -515,6 +541,22 @@ VSL_AVAILABLE_SINCE_1_3
 VSL_API
 int
 vsl_frame_attach(VSLFrame* frame, int fd, size_t size, size_t offset);
+
+/**
+ * Returns the path to the underlying VSLFrame buffer.  Note it will not always
+ * be available, such as when the frame was externally created.  When no path is
+ * available NULL is returned.
+ *
+ * @note This function is not thread-safe and you must use the string
+ * immediately.
+ *
+ * @since 1.3
+ * @memberof VSLFrame
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+const char*
+vsl_frame_path(const VSLFrame* frame);
 
 /**
  * Unregisters the frame, removing it from the host pool.
@@ -763,6 +805,15 @@ VSL_AVAILABLE_SINCE_1_0
 VSL_API
 void
 vsl_frame_munmap(VSLFrame* frame);
+
+/**
+ * Returns a fourcc integer code from the string.  If the fourcc code is invalid
+ * or unsupported then 0 is returned.
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+uint32_t
+vsl_fourcc_from_string(const char* fourcc);
 
 #ifdef __cplusplus
 }

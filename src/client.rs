@@ -68,8 +68,8 @@ impl Client {
 }
 
 impl Drop for Client {
-	fn drop(&mut self) {
-		self.release();
-		self.disconnect();
-	}
+    fn drop(&mut self) {
+        self.release();
+        self.disconnect();
+    }
 }

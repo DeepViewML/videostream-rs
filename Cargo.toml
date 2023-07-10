@@ -29,3 +29,6 @@ members = ["videostream-sys"]
 [dependencies.videostream-sys]
 path = "videostream-sys"
 version = "^0.2.0"
+
+[dev-dependencies]
+rand = "0.8.5"

@@ -206,8 +206,15 @@ extern "C" {
     ) -> *mut VSLFrame;
 }
 extern "C" {
-    #[doc = " Allocates the underlying memory for the frame.  This function will prefer to\n allocate using dmabuf and fallback to shared memory if dmabuf is not\n available, unless the frame has a path defined in which case shared memory is\n assumed.\n\n @since 1.3\n @memberof VSLFrame"]
-    pub fn vsl_frame_alloc(frame: *mut VSLFrame) -> ::std::os::raw::c_int;
+    #[doc = " Allocates the underlying memory for the frame.  This function will prefer to\n allocate using dmabuf and fallback to shared memory if dmabuf is not\n available, unless the frame has a path defined in which case shared memory is\n assumed.  If the path begins with /dev then it assumed to point to a\n dmabuf-heap device.  If path is NULL then the allocator will first attempt to\n create a dmabuf then fallback to shared memory.\n\n Allocations will be based on a buffer large enough to hold height*stride\n bytes.  If using a compressed fourcc such as JPEG the actual data will be\n smaller, this size can be captured when calling @ref vsl_frame_copy() as the\n function returns the number of bytes copied into the target frame.  There is\n currently no method to capture the actual compressed size when receiving an\n already compressed frame.  This limitation is because the size varies from\n frame to frame while the underlying buffer is of a fixed size.  When the\n actual encoded size is important, the @ref vsl_frame_copy() should be called\n directly or the reported size communicated to the client through a separate\n channel.\n\n @since 1.3\n @memberof VSLFrame"]
+    pub fn vsl_frame_alloc(
+        frame: *mut VSLFrame,
+        path: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[doc = " Frees the allocated buffer for this frame.  Does not release the frame itself\n for that use @ref vsl_frame_release().\n\n @param frame\n @since 1.3\n @memberof VSLFrame"]
+    pub fn vsl_frame_unalloc(frame: *mut VSLFrame);
 }
 extern "C" {
     #[doc = " Attach the provided file descriptor to the VSLFrame.  If size is not provided\n it is assumed to be stride*height bytes.  If offset is provided then size\n *MUST* be provided, the offset is in bytes to the start of the frame.\n\n @since 1.3\n @memberof VSLFrame"]
@@ -217,6 +224,10 @@ extern "C" {
         size: usize,
         offset: usize,
     ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[doc = " Returns the path to the underlying VSLFrame buffer.  Note it will not always\n be available, such as when the frame was externally created.  When no path is\n available NULL is returned.\n\n @note This function is not thread-safe and you must use the string\n immediately.\n\n @since 1.3\n @memberof VSLFrame"]
+    pub fn vsl_frame_path(frame: *const VSLFrame) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
     #[doc = " Unregisters the frame, removing it from the host pool.\n\n @deprecated This function is deprecated in favour of calling\n @ref vsl_frame_release() which will handle the required cleanup.\n\n @memberof VSLFrame"]
@@ -309,4 +320,8 @@ extern "C" {
 extern "C" {
     #[doc = " Maps the frame into the process' memory space, optionally also sets the\n size of the frame if @param size is non-NULL.\n\n @memberof VSLFrame"]
     pub fn vsl_frame_munmap(frame: *mut VSLFrame);
+}
+extern "C" {
+    #[doc = " Returns a fourcc integer code from the string.  If the fourcc code is invalid\n or unsupported then 0 is returned."]
+    pub fn vsl_fourcc_from_string(fourcc: *const ::std::os::raw::c_char) -> u32;
 }
