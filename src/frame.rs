@@ -14,7 +14,23 @@ pub struct Frame {
 }
 
 impl Frame {
-    pub fn new(width: u32, height: u32, stride: u32, fourcc: u32) -> Result<Self, Box<dyn Error>> {
+    pub fn new(
+        width: u32,
+        height: u32,
+        stride: u32,
+        fourcc_str: &str,
+    ) -> Result<Self, Box<dyn Error>> {
+        let buf = fourcc_str.as_bytes();
+        if buf.len() != 4 {
+            return Err("fourcc must be 4 character ascii code".into());
+        }
+        let mut fourcc: u32 = 0;
+        for i in 0..buf.len() {
+            fourcc += (buf[i] as u32) << i * 8;
+        }
+
+        println!("{}", fourcc);
+
         let ptr = unsafe {
             ffi::vsl_frame_init(width, height, stride, fourcc, std::ptr::null_mut(), None)
         };

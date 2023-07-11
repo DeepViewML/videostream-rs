@@ -4,12 +4,12 @@ mod frame {
     use videostream::frame;
     #[test]
     fn frame_test() {
-        let fourcc = 0x33424752 as u32; //Hex for RGB3
-        let frame = frame::Frame::new(640, 480, 0, fourcc).unwrap();
+        //let fourcc = 0x33424752 as u32; //Hex for RGB3
+        let frame = frame::Frame::new(640, 480, 0, "RGB3").unwrap();
 
         assert_eq!(frame.width(), 640);
         assert_eq!(frame.height(), 480);
-        assert_eq!(frame.fourcc(), fourcc);
+        assert_eq!(frame.fourcc(), 0x33424752);
         assert_eq!(frame.path(), None);
         assert_eq!(frame.handle(), None);
 
@@ -28,7 +28,7 @@ mod frame {
             assert_eq!(mem[i], mem2[i]);
         }
 
-        let frame2 = frame::Frame::new(640, 480, 0, fourcc).unwrap();
+        let frame2 = frame::Frame::new(640, 480, 0, "RGB3").unwrap();
         frame2
             .attach(frame.handle().unwrap(), frame.size() as usize, 0)
             .unwrap();
