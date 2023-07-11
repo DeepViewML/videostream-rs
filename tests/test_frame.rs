@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod frame {
-    use rand;
-    use rand::Rng;
+    use rand::{self, Rng};
     use videostream::frame;
     #[test]
     fn frame_test() {
