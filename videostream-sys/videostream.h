@@ -225,6 +225,12 @@ typedef struct vsl_client VSLClient;
 typedef struct vsl_frame VSLFrame;
 
 /**
+ * The VSLEncoder object represents encoder instance.
+ *
+ */
+typedef struct vsl_encoder VSLEncoder;
+
+/**
  * The VSLRect structure represents a rectangle region of a frame and is used to
  * define cropping regions for sub-frames.
  */
@@ -246,6 +252,16 @@ typedef struct vsl_rect {
      */
     int height;
 } VSLRect;
+
+// TODO: Define profiles that are usable for different codecs and encoders,
+// they could mean different things for different codecs and encoders but
+// overall they should provide noticeable difference between output size to
+// quality ratio and in some cases performance (depending on codec and encoder),
+// they can also mean a specific thing for specific encoder and format combo,
+// ie. for HEVC still image encoding MSP profile is used.
+typedef enum vsl_encode_profile {
+    VSL_ENCODE_PROFILE_AUTO, // Encoder default, auto settings
+} VSLEncoderProfile;
 
 /**
  * Function pointer definition which will be called as part of
@@ -316,7 +332,12 @@ int
 vsl_host_poll(VSLHost* host, int64_t wait);
 
 /**
- * Services the client socket.
+ * Services a single client socket.  Note this does not accept new sockets for
+ * that you must call @ref vsl_host_process().  The main advantage over calling
+ * this function is to see if individual client servicing resulted in an error.
+ *
+ * @since 1.0
+ * @memberof VSLHost
  */
 VSL_AVAILABLE_SINCE_1_0
 VSL_API
@@ -363,6 +384,10 @@ vsl_host_sockets(VSLHost* host,
 
 /**
  * Registers the frame with the host and publishes it to subscribers.
+ *
+ * @note A frame posted to this function transfers ownership to the host and
+ * should not have @ref vsl_frame_release called on it.  This will be managed
+ * by the host on frame expiry.
  */
 VSL_AVAILABLE_SINCE_1_3
 VSL_API
@@ -373,6 +398,19 @@ vsl_host_post(VSLHost*  host,
               int64_t   duration,
               int64_t   pts,
               int64_t   dts);
+
+/**
+ * Drops the frame from the host.  This is meant to be called from the frame
+ * but can also be used to remove the host association of the frame and return
+ * ownership to the caller.
+ *
+ * @since 1.3
+ * @memberof VSLHost
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_host_drop(VSLHost* host, VSLFrame* frame);
 
 /**
  * Creates a client and connects to the host at the provided path.  If the
@@ -450,6 +488,10 @@ vsl_client_set_timeout(VSLClient* client, float timeout);
  * and @ref vsl_host_post() functions which separate frame creation from posting
  * to the host for publishing to subscribers.
  *
+ * @note A frame created through this function is owned by the host and should
+ * not have @ref vsl_frame_release called on it.  This will be managed by the
+ * host on frame expiry.
+ *
  * @memberof VSLFrame
  */
 VSL_DEPRECATED_SINCE_1_3
@@ -493,7 +535,20 @@ vsl_frame_init(uint32_t          width,
  * Allocates the underlying memory for the frame.  This function will prefer to
  * allocate using dmabuf and fallback to shared memory if dmabuf is not
  * available, unless the frame has a path defined in which case shared memory is
- * assumed.
+ * assumed.  If the path begins with /dev then it assumed to point to a
+ * dmabuf-heap device.  If path is NULL then the allocator will first attempt to
+ * create a dmabuf then fallback to shared memory.
+ *
+ * Allocations will be based on a buffer large enough to hold height*stride
+ * bytes.  If using a compressed fourcc such as JPEG the actual data will be
+ * smaller, this size can be captured when calling @ref vsl_frame_copy() as the
+ * function returns the number of bytes copied into the target frame.  There is
+ * currently no method to capture the actual compressed size when receiving an
+ * already compressed frame.  This limitation is because the size varies from
+ * frame to frame while the underlying buffer is of a fixed size.  When the
+ * actual encoded size is important, the @ref vsl_frame_copy() should be called
+ * directly or the reported size communicated to the client through a separate
+ * channel.
  *
  * @since 1.3
  * @memberof VSLFrame
@@ -501,7 +556,20 @@ vsl_frame_init(uint32_t          width,
 VSL_AVAILABLE_SINCE_1_3
 VSL_API
 int
-vsl_frame_alloc(VSLFrame* frame);
+vsl_frame_alloc(VSLFrame* frame, const char* path);
+
+/**
+ * Frees the allocated buffer for this frame.  Does not release the frame itself
+ * for that use @ref vsl_frame_release().
+ *
+ * @param frame
+ * @since 1.3
+ * @memberof VSLFrame
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+void
+vsl_frame_unalloc(VSLFrame* frame);
 
 /**
  * Attach the provided file descriptor to the VSLFrame.  If size is not provided
@@ -515,6 +583,22 @@ VSL_AVAILABLE_SINCE_1_3
 VSL_API
 int
 vsl_frame_attach(VSLFrame* frame, int fd, size_t size, size_t offset);
+
+/**
+ * Returns the path to the underlying VSLFrame buffer.  Note it will not always
+ * be available, such as when the frame was externally created.  When no path is
+ * available NULL is returned.
+ *
+ * @note This function is not thread-safe and you must use the string
+ * immediately.
+ *
+ * @since 1.3
+ * @memberof VSLFrame
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+const char*
+vsl_frame_path(const VSLFrame* frame);
 
 /**
  * Unregisters the frame, removing it from the host pool.
@@ -709,6 +793,18 @@ int
 vsl_frame_height(const VSLFrame* frame);
 
 /**
+ * Returns the stride in bytes of the video frame, to go from one row to the
+ * next.
+ *
+ * @since 1.3
+ * @memberof VSLFrame
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_frame_size(const VSLFrame* frame);
+
+/**
  * Returns the size in bytes of the video frame.
  *
  * @memberof VSLFrame
@@ -763,6 +859,341 @@ VSL_AVAILABLE_SINCE_1_0
 VSL_API
 void
 vsl_frame_munmap(VSLFrame* frame);
+
+/**
+ * Cache synchronization session control for when using DMA-backed buffers.
+ * This happens automatically on mmap/munmap but the API is also available for
+ * cases where the frame is updated in-place during a mapping.
+ *
+ * @param frame the frame object to synchronize
+ * @param enable whether the sync session is being enabled or disabled
+ * @param mode the synchronization mode controls READ, WRITE, or both.
+ * @since 1.3
+ * @memberof VSLFrame
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_frame_sync(const VSLFrame* frame, int enable, int mode);
+
+/**
+ * Returns a fourcc integer code from the string.  If the fourcc code is invalid
+ * or unsupported then 0 is returned.
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+uint32_t
+vsl_fourcc_from_string(const char* fourcc);
+
+/**
+ * @brief Creates VSLEncoder instance
+ *
+ * @param profile VSLEncoderProfile determining encode quality
+ * @param outputFourcc fourcc code defining the codec
+ * @param fps output stream fps
+ * @return VSLEncoder* new encoder instance
+ *
+ * Every encoder instance must be released using vsl_encoder_release
+ *
+ * For Hantro VC8000e encoder initialization is performed when vsl_encode_frame
+ * is called for a first time
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+VSLEncoder*
+vsl_encoder_create(VSLEncoderProfile profile, uint32_t outputFourcc, int fps);
+
+/**
+ * @brief Destroys VSLEncoder instance
+ *
+ * @param encoder VSLEncoder* instance to destroy
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+void
+vsl_encoder_release(VSLEncoder* encoder);
+
+/**
+ * @brief Encode frame
+ * @param encoder VSLEncoder instance
+ * @param source VSLFrame source
+ * @param destination VSLFrame destination
+ * @param cropRegion (optional) VSLRect that defines the crop region, NULL when
+ * destination and source sizes match
+ * @param keyframe (optional) VSL sets this to 1 if the encoded frame is a
+ * keyframe, otherwise 0. User can set to NULL to ignore param.
+ * @retval 0 on success
+ * @retval -1 on falure (check errno for details)
+ *
+ * For Hantro VC8000e encoder initialization is performed when this function is
+ * called for a first time For Hantro VC8000e encoder source width, height and
+ * fourcc; destination width, height and fourcc; cropRegion parameters must
+ * match for all function calls throughout the lifetime of the encoder instance
+ */
+
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_encode_frame(VSLEncoder*    encoder,
+                 VSLFrame*      source,
+                 VSLFrame*      destination,
+                 const VSLRect* cropRegion,
+                 int*           keyframe);
+
+
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+VSLFrame*
+vsl_encoder_new_output_frame(const VSLEncoder* encoder,
+                             int               width,
+                             int               height,
+                             int64_t           duration,
+                             int64_t           pts,
+                             int64_t           dts);
+
+typedef struct vsl_camera_buffer vsl_camera_buffer;
+
+typedef struct vsl_camera vsl_camera;
+
+/**
+ * Opens the camera device specified by the @param filename and allocates
+ * device memory. If the device was not found or could not be recognized
+ *
+ * Return NULL if the device was not found or could not be recognized.
+ * Otherwise returns a vsl_camera context which can be used in other vsl_camera
+ * functions.
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+vsl_camera*
+vsl_camera_open_device(const char* filename);
+
+/**
+ * Initialized the camera device in @param ctx for streaming
+ * and allocate camera buffers.
+ *
+ * Then requests the camera to stream at the requested @param width
+ * and @param height using the requested @param fourcc code.
+ *
+ * The @param width, @param height, @param fourcc parameters
+ * will be set to the actual width and height and fourcc that
+ * the camera driver sets the device to.
+ *
+ * Returns -1 if an error is encountered when initializing the camera to stream,
+ * otherwise returns 0
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_camera_init_device(vsl_camera* ctx,
+                       int*        width,
+                       int*        height,
+                       int*        buf_count,
+                       uint32_t*  fourcc);
+
+/**
+ * Requests the camera in @param ctx to mirror the image leftside right
+ *
+ * Returns -1 if a mirror was requested but the camera driver refused
+ * the request, otherwise 0.
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_camera_mirror(const vsl_camera* ctx, bool mirror);
+
+/**
+ * Requests the camera in @param ctx to mirror the image upside down
+ *
+ * Returns -1 if a mirror was requested but the camera driver refused
+ * the request, otherwise 0.
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_camera_mirror_v(const vsl_camera* ctx, bool mirror);
+
+/**
+ * Starts the camera stream.
+ *
+ * Must be called after @ref vsl_camera_init_device
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_camera_start_capturing(vsl_camera* ctx);
+
+/**
+ * Attempts to read a frame from the camera.
+ *
+ * Must be called after @ref vsl_camera_start_capturing.
+ *
+ * Ensure to call @ref vsl_camera_release_buffer after the buffer is done being
+ * used and allow the buffer to be reused for frame capture.
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+vsl_camera_buffer*
+vsl_camera_get_data(vsl_camera* ctx);
+
+/**
+ * Enqueues a buffer to be reused for frame capture.
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_camera_release_buffer(vsl_camera* ctx, const vsl_camera_buffer* buffer);
+
+/**
+ * Stops the camera stream.
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_camera_stop_capturing(const vsl_camera* ctx);
+
+/**
+ * Uninitializes the camera buffers and frees the buffer memory
+ *
+ * Ensure that the device is not streaming. If
+ * @ref vsl_camera_start_capturing was called, ensure that
+ * @ref vsl_camera_stop_capturing is called before this function
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+void
+vsl_camera_uninit_device(vsl_camera* ctx);
+
+/**
+ * Closes the camera device and frees the device memory
+ *
+ * Ensure that the device is not streaming. If
+ * @ref vsl_camera_start_capturing was called, ensure that
+ * @ref vsl_camera_stop_capturing is called before this function
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+void
+vsl_camera_close_device(vsl_camera* ctx);
+
+/**
+ * Checks if dma buffers are supported on the camera
+ *
+ * Ensure that this is called after
+ * @ref vsl_camera_init_device
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_camera_is_dmabuf_supported(const vsl_camera* ctx);
+
+/**
+ * Returns the number of queued buffers for the camera.
+ * @ref vsl_camera_get_data will timeout if there are 0 queued buffers.
+ *
+ * The user can send buffers back to the buffer queue using
+ * @ref vsl_camera_release_buffer
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_camera_get_queued_buf_count(const vsl_camera* ctx);
+
+/**
+ * Returns the mmap memory of the camera buffer
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+void*
+vsl_camera_buffer_mmap(vsl_camera_buffer* buffer);
+
+/**
+ * Returns the dmabuf file descriptor of the camera buffer
+ *
+ * If the device does not support dmabuf, returns -1
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_camera_buffer_dma_fd(const vsl_camera_buffer* buffer);
+
+/**
+ * Returns the phys addr of the camera buffer
+ *
+ * If the device does not support dmabuf, returns 0
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+uint64_t
+vsl_camera_buffer_phys_addr(const vsl_camera_buffer* buffer);
+
+/**
+ * Returns the length of the camera buffer in bytes
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+uint32_t
+vsl_camera_buffer_length(const vsl_camera_buffer* buffer);
+
+/**
+ * Returns the fourcc code of the camera buffer
+ *
+ * @memberof VSLCamera
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+uint32_t
+vsl_camera_buffer_fourcc(const vsl_camera_buffer* buffer);
+
+/**
+ * Lists the supported single planar formats of
+ * the camera into @param codes as fourcc codes
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_camera_enum_fmts(const vsl_camera* ctx, uint32_t* codes, int size);
+
+/**
+ * Lists the supported multi planar formats of
+ * the camera into @param codes as fourcc codes
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_camera_enum_mplane_fmts(const vsl_camera* ctx, uint32_t* codes, int size);
 
 #ifdef __cplusplus
 }
