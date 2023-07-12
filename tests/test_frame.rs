@@ -56,7 +56,7 @@ mod frame {
 
         let mut expect = Vec::new();
         let mut rng = rand::thread_rng();
-        for i in 0..(frame.height() * frame.width() * 3) {
+        for _ in 0..(frame.height() * frame.width() * 3) {
             expect.push(rng.gen::<u8>() as u8);
         }
         let mut file = File::options()
@@ -80,6 +80,8 @@ mod frame {
         for i in 0..mem.len() {
             assert_eq!(mem[i], expect[i])
         }
-        fs::remove_file("./temp.txt");
+        if let Err(_) = fs::remove_file("./temp.txt") {
+            panic!("Test succeeded but file \"./temp.txt\" was not deleted");
+        }
     }
 }
