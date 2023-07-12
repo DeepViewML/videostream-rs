@@ -1,5 +1,9 @@
 use crate::client;
-use std::{error::Error, io};
+use std::{
+    error::Error,
+    io,
+    slice::{from_raw_parts, from_raw_parts_mut},
+};
 use videostream_sys as ffi;
 
 /// The Frame structure handles the frame and underlying framebuffer.  A frame
@@ -104,12 +108,18 @@ impl Frame {
         return unsafe { ffi::vsl_frame_paddr(self.ptr) };
     }
 
-    pub fn mmap(&self) {
-        //return unsafe { ffi::vsl_frame_mmap(self.ptr) }; //Needs work
+    pub fn mmap(&self) -> &[u8] {
+        let mut size: usize = 0;
+        return unsafe {
+            from_raw_parts_mut(
+                ffi::vsl_frame_mmap(self.ptr, &mut size) as *mut u8,
+                self.size() as usize,
+            )
+        }; // Add error checking to make sure the mmap is not zero
     }
 
     pub fn munmap(&self) {
-        //return unsafe { ffi::vsl_frame_munmap(self.ptr) };
+        return unsafe { ffi::vsl_frame_munmap(self.ptr) };
     }
 
     pub fn get_ptr(&self) -> *mut ffi::VSLFrame {
