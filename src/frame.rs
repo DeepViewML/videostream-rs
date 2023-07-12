@@ -45,11 +45,11 @@ impl Frame {
 
         let ret = unsafe { ffi::vsl_frame_alloc(self.ptr, path) } as i32;
 
-        if ret == 0 {
-            return Ok(());
+        if ret != 0 {
+            let err = io::Error::last_os_error();
+            return Err(Box::new(err));
         }
-        let err = io::Error::last_os_error();
-        return Err(Box::new(err));
+        return Ok(());
     }
 
     pub fn wrap(ptr: *mut ffi::VSLFrame) -> Result<Self, ()> {
