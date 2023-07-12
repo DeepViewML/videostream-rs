@@ -1,9 +1,14 @@
 #[cfg(test)]
 mod frame {
     use rand::{self, Rng};
+    use std::{
+        fs::{self, File},
+        io::Write,
+        os::fd::AsRawFd,
+    };
     use videostream::frame;
     #[test]
-    fn frame_test() {
+    fn frame() {
         //let fourcc = 0x33424752 as u32; //Hex for RGB3
         let frame = frame::Frame::new(640, 480, 0, "RGB3").unwrap();
 
@@ -43,5 +48,38 @@ mod frame {
         }
         assert_eq!(mem[0], v2[0]);
         assert_eq!(mem2[0], v2[0]);
+    }
+
+    #[test]
+    fn attach_file() {
+        let frame = frame::Frame::new(640, 480, 0, "RGB3").unwrap();
+
+        let mut expect = Vec::new();
+        let mut rng = rand::thread_rng();
+        for i in 0..(frame.height() * frame.width() * 3) {
+            expect.push(rng.gen::<u8>() as u8);
+        }
+        let mut file = File::options()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open("./temp.txt")
+            .unwrap();
+        file.write_all(&expect).unwrap();
+
+        frame
+            .attach(
+                file.as_raw_fd(),
+                (frame.height() * frame.width() * 3) as usize,
+                0,
+            )
+            .unwrap();
+
+        let mem = frame.mmap().unwrap();
+
+        for i in 0..mem.len() {
+            assert_eq!(mem[i], expect[i])
+        }
+        fs::remove_file("./temp.txt");
     }
 }

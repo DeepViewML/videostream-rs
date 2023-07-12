@@ -1,5 +1,5 @@
 use crate::client;
-use std::{error::Error, ffi::CStr, io, slice};
+use std::{error::Error, ffi::CStr, io, os::fd::RawFd, slice};
 use videostream_sys as ffi;
 
 /// The Frame structure handles the frame and underlying framebuffer.  A frame
@@ -28,8 +28,6 @@ impl Frame {
         for i in 0..buf.len() {
             fourcc += (buf[i] as u32) << i * 8;
         }
-
-        println!("{}", fourcc);
 
         let ptr = unsafe {
             ffi::vsl_frame_init(width, height, stride, fourcc, std::ptr::null_mut(), None)
@@ -73,11 +71,11 @@ impl Frame {
 
     pub fn trylock(&self) -> Result<(), Box<dyn Error>> {
         let ret = unsafe { ffi::vsl_frame_trylock(self.ptr) };
-        if ret == 0 {
-            return Ok(());
+        if ret != 0 {
+            let err = io::Error::last_os_error();
+            return Err(Box::new(err));
         }
-        let err = io::Error::last_os_error();
-        return Err(Box::new(err));
+        return Ok(());
     }
 
     pub fn unlock(&self) -> Result<(), Box<dyn Error>> {
@@ -130,6 +128,12 @@ impl Frame {
     pub fn size(&self) -> i32 {
         return unsafe { ffi::vsl_frame_size(self.ptr) as i32 }; //Needs work
     }
+
+    /*
+    pub fn stride(&self) -> i32 {
+        return unsafe { ffi::vsl_frame_stride(self.ptr) as i32};
+    }
+    */
 
     pub fn handle(&self) -> Option<i32> {
         let handle: std::os::raw::c_int = unsafe { ffi::vsl_frame_handle(self.ptr) };
@@ -187,7 +191,7 @@ impl Frame {
         return unsafe { ffi::vsl_frame_munmap(self.ptr) };
     }
 
-    pub fn attach(&self, fd: i32, size: usize, offset: usize) -> Result<(), Box<dyn Error>> {
+    pub fn attach(&self, fd: RawFd, size: usize, offset: usize) -> Result<(), Box<dyn Error>> {
         let ret = unsafe { ffi::vsl_frame_attach(self.ptr, fd, size, offset) };
         if ret < -1 {
             let err = io::Error::last_os_error();
