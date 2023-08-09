@@ -84,4 +84,35 @@ mod frame {
             panic!("Test succeeded but file \"./temp.txt\" was not deleted");
         }
     }
+
+    #[test]
+    fn bad_attach() {
+        let frame = frame::Frame::new(640, 480, 0, "RGB3").unwrap();
+
+        match frame.attach(-1, 1 as usize, 0) {
+            Ok(_) => {
+                panic!("Failed")
+            }
+            Err(_) => {}
+        };
+
+        match frame.attach(9000, 1 as usize, 0) {
+            Ok(_) => {
+                panic!("Failed")
+            }
+            Err(_) => {}
+        };
+    }
+
+    #[test]
+    fn fourcc() {}
+
+    #[test]
+    fn bad_fourcc() {}
+
+    #[test]
+    fn nodma() {}
+
+    #[test]
+    fn invalid_shm_name() {}
 }
