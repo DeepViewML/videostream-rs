@@ -1,5 +1,12 @@
 use crate::client;
-use std::{error::Error, ffi::CStr, io, os::fd::RawFd, slice};
+use std::{
+    error::Error,
+    ffi::{CStr, CString},
+    io,
+    os::fd::RawFd,
+    path::Path,
+    ptr, slice,
+};
 use videostream_sys as ffi;
 
 /// The Frame structure handles the frame and underlying framebuffer.  A frame
@@ -12,6 +19,8 @@ use videostream_sys as ffi;
 pub struct Frame {
     ptr: *mut ffi::VSLFrame,
 }
+
+unsafe impl Send for Frame {}
 
 impl Frame {
     pub fn new(
@@ -40,11 +49,16 @@ impl Frame {
         return Ok(Frame { ptr });
     }
 
-    pub fn alloc(&self) -> Result<(), Box<dyn Error>> {
-        let path = unsafe { ffi::vsl_frame_path(self.ptr) };
-
-        let ret = unsafe { ffi::vsl_frame_alloc(self.ptr, path) } as i32;
-
+    pub fn alloc(&self, path: Option<&Path>) -> Result<(), Box<dyn Error>> {
+        let path_ptr;
+        if let Some(path) = path {
+            let path = path.to_str().unwrap();
+            let path = CString::new(path).unwrap();
+            path_ptr = path.into_raw();
+        } else {
+            path_ptr = ptr::null_mut();
+        }
+        let ret = unsafe { ffi::vsl_frame_alloc(self.ptr, path_ptr) } as i32;
         if ret != 0 {
             let err = io::Error::last_os_error();
             return Err(Box::new(err));
@@ -143,8 +157,12 @@ impl Frame {
         return Some(handle as i32);
     }
 
-    pub fn paddr(&self) -> isize {
-        return unsafe { ffi::vsl_frame_paddr(self.ptr) };
+    pub fn paddr(&self) -> Option<isize> {
+        let ret = unsafe { ffi::vsl_frame_paddr(self.ptr) };
+        if ret == -1 {
+            return None;
+        }
+        return Some(ret);
     }
 
     pub fn path(&self) -> Option<&str> {
@@ -193,7 +211,7 @@ impl Frame {
 
     pub fn attach(&self, fd: RawFd, size: usize, offset: usize) -> Result<(), Box<dyn Error>> {
         let ret = unsafe { ffi::vsl_frame_attach(self.ptr, fd, size, offset) };
-        if ret < -1 {
+        if ret < 0 {
             let err = io::Error::last_os_error();
             return Err(Box::new(err));
         }
@@ -205,8 +223,22 @@ impl Frame {
     }
 }
 
+impl TryFrom<*mut ffi::VSLFrame> for Frame {
+    type Error = ();
+
+    fn try_from(ptr: *mut ffi::VSLFrame) -> Result<Self, Self::Error> {
+        if ptr.is_null() {
+            return Err(());
+        }
+        return Ok(Frame { ptr });
+    }
+}
+
 impl Drop for Frame {
     fn drop(&mut self) {
-        unsafe { ffi::vsl_frame_release(self.ptr) };
+        unsafe {
+            ffi::vsl_frame_unlock(self.ptr);
+            ffi::vsl_frame_release(self.ptr);
+        };
     }
 }

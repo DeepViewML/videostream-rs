@@ -12,6 +12,7 @@ pub struct Client {
     ptr: *mut ffi::VSLClient,
 }
 
+unsafe impl Send for Client {}
 unsafe impl Sync for Client {}
 
 impl Client {
