@@ -18,7 +18,7 @@ mod frame {
         assert_eq!(frame.path(), None);
         assert_eq!(frame.handle(), None);
 
-        frame.alloc().unwrap();
+        frame.alloc(None).unwrap();
 
         assert_eq!(frame.size(), 640 * 480 * 3);
 
