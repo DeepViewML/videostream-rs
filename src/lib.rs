@@ -22,6 +22,8 @@ pub mod client;
 /// The host module provides the frame sharing functionality.
 pub mod host;
 
+pub mod encoder;
+
 #[derive(Debug)]
 struct NullStringError;
 
@@ -40,6 +42,17 @@ pub fn version() -> &'static str {
 
 pub fn timestamp() -> i64 {
     return unsafe { ffi::vsl_timestamp() };
+}
+
+pub fn fourcc(code: &str) -> u32 {
+    let bytes = code.as_bytes();
+    let mut fourcc: u32 = 0;
+
+    for i in 0..4 {
+        fourcc |= (bytes[i] as u32) << (i * 8);
+    }
+
+    return fourcc;
 }
 
 #[cfg(test)]
