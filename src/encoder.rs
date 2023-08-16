@@ -1,7 +1,5 @@
-use crate::frame;
-use crate::NullStringError;
-use std::error::Error;
-use std::os::raw::c_int;
+use crate::{frame, NullStringError};
+use std::{error::Error, os::raw::c_int};
 use videostream_sys as ffi;
 
 pub struct Encoder {
@@ -27,15 +25,19 @@ impl VSLRect {
             },
         };
     }
+
     pub fn get_width(&self) -> c_int {
         return (self.rect).width;
     }
+
     pub fn get_height(&self) -> c_int {
         return (self.rect).height;
     }
+
     pub fn get_x(&self) -> c_int {
         return (self.rect).x;
     }
+
     pub fn get_y(&self) -> c_int {
         return (self.rect).y;
     }

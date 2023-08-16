@@ -1,9 +1,9 @@
 use crate::frame::Frame;
-use std::error::Error;
-use std::ffi::c_void;
-use std::ffi::CStr;
-use std::ffi::CString;
-use std::io;
+use std::{
+    error::Error,
+    ffi::{c_void, CStr, CString},
+    io,
+};
 use videostream_sys as ffi;
 
 use crate::NullStringError;

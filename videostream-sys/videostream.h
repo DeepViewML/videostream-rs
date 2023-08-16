@@ -934,11 +934,19 @@ vsl_encoder_release(VSLEncoder* encoder);
 VSL_AVAILABLE_SINCE_1_3
 VSL_API
 int
+<<<<<<< HEAD
 vsl_encode_frame(VSLEncoder* encoder,
                  VSLFrame*   source,
                  VSLFrame*   destination,
                  VSLRect*    cropRegion,
                  int*        keyframe);
+=======
+vsl_encode_frame(VSLEncoder*    encoder,
+                 VSLFrame*      source,
+                 VSLFrame*      destination,
+                 const VSLRect* cropRegion,
+                 int*           keyframe);
+>>>>>>> master
 
 
 VSL_AVAILABLE_SINCE_1_3

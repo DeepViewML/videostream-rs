@@ -9,9 +9,7 @@
 //!
 //! [`DeepView Support Portal`]: https://support.deepviewml.com
 
-use std::error::Error;
-use std::ffi::CStr;
-use std::fmt;
+use std::{error::Error, ffi::CStr, fmt};
 use videostream_sys as ffi;
 /// The frame module provides the common frame handling functionality.
 pub mod frame;
