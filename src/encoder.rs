@@ -1,5 +1,5 @@
 use crate::{frame, NullStringError};
-use std::{error::Error, io, os::raw::c_int};
+use std::{error::Error, os::raw::c_int};
 use videostream_sys as ffi;
 
 pub struct Encoder {
@@ -27,27 +27,27 @@ impl VSLRect {
     }
 
     pub fn get_width(&self) -> c_int {
-        return unsafe { (self.rect).width };
+        return (self.rect).width;
     }
 
     pub fn get_height(&self) -> c_int {
         // println!("{}",height);
-        return unsafe { (self.rect).height };
+        return (self.rect).height;
     }
 
     pub fn get_x(&self) -> c_int {
-        return unsafe { (self.rect).x };
+        return (self.rect).x;
     }
 
     pub fn get_y(&self) -> c_int {
-        return unsafe { (self.rect).y };
+        return (self.rect).y;
     }
 }
 
 impl Encoder {
-    pub fn create(profile: u32, outputFourcc: u32, fps: c_int) -> Self {
+    pub fn create(profile: u32, output_fourcc: u32, fps: c_int) -> Self {
         return Encoder {
-            ptr: unsafe { ffi::vsl_encoder_create(profile, outputFourcc, fps) },
+            ptr: unsafe { ffi::vsl_encoder_create(profile, output_fourcc, fps) },
         };
     }
 
@@ -59,20 +59,23 @@ impl Encoder {
         pts: i64,
         dts: i64,
     ) -> Result<frame::Frame, Box<dyn Error>> {
-        let frame = unsafe {
+        let frame_ptr = unsafe {
             ffi::vsl_encoder_new_output_frame(self.ptr, width, height, duration, pts, dts)
         };
-        if frame.is_null() {
+        if frame_ptr.is_null() {
             return Err(Box::new(NullStringError {}));
         }
-        return Ok(frame::Frame::new(frame).unwrap());
+        match frame_ptr.try_into() {
+            Ok(frame) => return Ok(frame),
+            Err(()) => return Err(Box::new(NullStringError {})),
+        };
     }
 
     pub fn frame(
         &self,
         source: &frame::Frame,
         destination: &frame::Frame,
-        cropRegion: &mut VSLRect,
+        crop_region: &mut VSLRect,
         keyframe: *mut c_int,
     ) -> i32 {
         return unsafe {
@@ -80,7 +83,7 @@ impl Encoder {
                 self.ptr,
                 source.get_ptr(),
                 destination.get_ptr(),
-                &mut cropRegion.rect,
+                &mut crop_region.rect,
                 keyframe,
             )
         };
