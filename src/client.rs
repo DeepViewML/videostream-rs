@@ -8,11 +8,11 @@ use videostream_sys as ffi;
 
 use crate::NullStringError;
 
-#[derive(Clone, Copy)]
 pub struct Client {
     ptr: *mut ffi::VSLClient,
 }
 
+unsafe impl Send for Client {}
 unsafe impl Sync for Client {}
 
 impl Client {
@@ -64,6 +64,13 @@ impl Client {
         if frame.is_null() {
             return Err(Box::new(NullStringError {}));
         }
-        return Ok(Frame::new(frame).unwrap());
+        return Ok(Frame::wrap(frame).unwrap());
+    }
+}
+
+impl Drop for Client {
+    fn drop(&mut self) {
+        self.release();
+        self.disconnect();
     }
 }

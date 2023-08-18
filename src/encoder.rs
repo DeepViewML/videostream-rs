@@ -58,13 +58,16 @@ impl Encoder {
         pts: i64,
         dts: i64,
     ) -> Result<frame::Frame, Box<dyn Error>> {
-        let frame = unsafe {
+        let frame_ptr = unsafe {
             ffi::vsl_encoder_new_output_frame(self.ptr, width, height, duration, pts, dts)
         };
-        if frame.is_null() {
+        if frame_ptr.is_null() {
             return Err(Box::new(NullStringError {}));
         }
-        return Ok(frame::Frame::new(frame).unwrap());
+        match frame_ptr.try_into() {
+            Ok(frame) => return Ok(frame),
+            Err(()) => return Err(Box::new(NullStringError {})),
+        };
     }
 
     pub fn frame(
