@@ -7,7 +7,7 @@ pub struct Encoder {
 }
 
 pub struct VSLEncoderProfile {
-    profile: ffi::VSLEncoderProfile,
+    _profile: ffi::VSLEncoderProfile,
 }
 
 pub struct VSLRect {
@@ -31,7 +31,6 @@ impl VSLRect {
     }
 
     pub fn get_height(&self) -> c_int {
-        // println!("{}",height);
         return (self.rect).height;
     }
 
