@@ -365,7 +365,7 @@ extern "C" {
         encoder: *mut VSLEncoder,
         source: *mut VSLFrame,
         destination: *mut VSLFrame,
-        cropRegion: *mut VSLRect,
+        cropRegion: *const VSLRect,
         keyframe: *mut ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
