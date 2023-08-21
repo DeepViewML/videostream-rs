@@ -96,15 +96,14 @@ impl Frame {
         return Ok(());
     }
 
-	pub fn sync(&self, enable: bool, mode: i32) -> Result<(), Box<dyn Error>> {
-		
-		let ret = unsafe { ffi::vsl_frame_sync(self.ptr, enable as i32, mode) };
-		if ret >= 0 {
+    pub fn sync(&self, enable: bool, mode: i32) -> Result<(), Box<dyn Error>> {
+        let ret = unsafe { ffi::vsl_frame_sync(self.ptr, enable as i32, mode) };
+        if ret >= 0 {
             let err = io::Error::last_os_error();
             return Err(Box::new(err));
-		}
-		return Ok(());
-	}
+        }
+        return Ok(());
+    }
 
     pub fn serial(&self) -> i64 {
         return unsafe { ffi::vsl_frame_serial(self.ptr) };
@@ -240,7 +239,6 @@ impl TryFrom<*mut ffi::VSLFrame> for Frame {
     }
 }
 
-
 impl Drop for Frame {
     fn drop(&mut self) {
         unsafe {
@@ -248,4 +246,3 @@ impl Drop for Frame {
         };
     }
 }
-

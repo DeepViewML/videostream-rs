@@ -60,7 +60,7 @@ impl Client {
     pub fn get_frame(&self, until: i64) -> Result<Frame, Box<dyn Error>> {
         let frame = unsafe { ffi::vsl_frame_wait(self.ptr, until) };
         if frame.is_null() {
-			let err = io::Error::last_os_error();
+            let err = io::Error::last_os_error();
             return Err(Box::new(err));
         }
         return Ok(Frame::wrap(frame).unwrap());
