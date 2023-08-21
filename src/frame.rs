@@ -74,10 +74,6 @@ impl Frame {
         return Ok(Frame { ptr });
     }
 
-    pub fn release(&self) {
-        unsafe { ffi::vsl_frame_release(self.ptr) };
-    }
-
     pub fn wait(client: &client::Client, until: i64) -> Result<Self, Box<dyn Error>> {
         let wrapper = client.get_frame(until)?;
         return Ok(Frame { ptr: wrapper.ptr });
@@ -94,6 +90,15 @@ impl Frame {
 
     pub fn unlock(&self) -> Result<(), Box<dyn Error>> {
         if unsafe { ffi::vsl_frame_unlock(self.ptr) as i32 } == -1 {
+            let err = io::Error::last_os_error();
+            return Err(Box::new(err));
+        }
+        return Ok(());
+    }
+
+    pub fn sync(&self, enable: bool, mode: i32) -> Result<(), Box<dyn Error>> {
+        let ret = unsafe { ffi::vsl_frame_sync(self.ptr, enable as i32, mode) };
+        if ret >= 0 {
             let err = io::Error::last_os_error();
             return Err(Box::new(err));
         }
@@ -237,7 +242,6 @@ impl TryFrom<*mut ffi::VSLFrame> for Frame {
 impl Drop for Frame {
     fn drop(&mut self) {
         unsafe {
-            ffi::vsl_frame_unlock(self.ptr);
             ffi::vsl_frame_release(self.ptr);
         };
     }

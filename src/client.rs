@@ -6,8 +6,6 @@ use std::{
 };
 use videostream_sys as ffi;
 
-use crate::NullStringError;
-
 pub struct Client {
     ptr: *mut ffi::VSLClient,
 }
@@ -62,7 +60,8 @@ impl Client {
     pub fn get_frame(&self, until: i64) -> Result<Frame, Box<dyn Error>> {
         let frame = unsafe { ffi::vsl_frame_wait(self.ptr, until) };
         if frame.is_null() {
-            return Err(Box::new(NullStringError {}));
+            let err = io::Error::last_os_error();
+            return Err(Box::new(err));
         }
         return Ok(Frame::wrap(frame).unwrap());
     }
