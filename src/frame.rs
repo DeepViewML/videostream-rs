@@ -184,12 +184,11 @@ impl Frame {
     }
 
     pub fn mmap(&self) -> Result<&[u8], ()> {
-        let mut size: usize = 0;
-        let ptr = unsafe { ffi::vsl_frame_mmap(self.ptr, &mut size as *mut usize) };
-        if ptr.is_null() || size == 0 {
+        let ptr = unsafe { ffi::vsl_frame_mmap(self.ptr, std::ptr::null_mut::<usize>()) };
+        if ptr.is_null() || self.size() == 0 {
             return Err(());
         }
-        return Ok(unsafe { slice::from_raw_parts(ptr as *const u8, size) });
+        return Ok(unsafe { slice::from_raw_parts(ptr as *const u8, self.size() as usize) });
     }
 
     pub fn mmap_mut(&self) -> Result<&mut [u8], ()> {
