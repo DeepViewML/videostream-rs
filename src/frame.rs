@@ -154,12 +154,9 @@ impl Frame {
     }
     */
 
-    pub fn handle(&self) -> Option<i32> {
+    pub fn handle(&self) -> i32 {
         let handle: std::os::raw::c_int = unsafe { ffi::vsl_frame_handle(self.ptr) };
-        if handle == -1 {
-            return None;
-        }
-        return Some(handle as i32);
+        return handle as i32;
     }
 
     pub fn paddr(&self) -> Option<isize> {
@@ -187,21 +184,14 @@ impl Frame {
     }
 
     pub fn mmap(&self) -> Result<&[u8], ()> {
-        if self.handle() == None {
+        let ptr = unsafe { ffi::vsl_frame_mmap(self.ptr, std::ptr::null_mut::<usize>()) };
+        if ptr.is_null() || self.size() == 0 {
             return Err(());
         }
-        let mut size: usize = 0;
-        let ptr = unsafe { ffi::vsl_frame_mmap(self.ptr, &mut size as *mut usize) };
-        if ptr.is_null() || size == 0 {
-            return Err(());
-        }
-        return Ok(unsafe { slice::from_raw_parts(ptr as *const u8, size) });
+        return Ok(unsafe { slice::from_raw_parts(ptr as *const u8, self.size() as usize) });
     }
 
     pub fn mmap_mut(&self) -> Result<&mut [u8], ()> {
-        if self.handle() == None {
-            return Err(());
-        }
         let mut size: usize = 0;
         let ptr = unsafe { ffi::vsl_frame_mmap(self.ptr, &mut size as *mut usize) };
         if ptr.is_null() || size == 0 {
@@ -242,6 +232,7 @@ impl TryFrom<*mut ffi::VSLFrame> for Frame {
 impl Drop for Frame {
     fn drop(&mut self) {
         unsafe {
+            ffi::vsl_frame_unlock(self.ptr);
             ffi::vsl_frame_release(self.ptr);
         };
     }
