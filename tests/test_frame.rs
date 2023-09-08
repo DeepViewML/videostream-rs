@@ -34,7 +34,7 @@ mod frame {
 
         let frame2 = frame::Frame::new(640, 480, 0, "RGB3").unwrap();
         frame2
-            .attach(frame.handle().unwrap(), frame.size() as usize, 0)
+            .attach(frame.handle(), frame.size() as usize, 0)
             .unwrap();
         let v2: &mut [u8] = frame2.mmap_mut().unwrap();
         for i in 0..mem.len() {
