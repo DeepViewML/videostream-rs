@@ -232,7 +232,6 @@ impl TryFrom<*mut ffi::VSLFrame> for Frame {
 impl Drop for Frame {
     fn drop(&mut self) {
         unsafe {
-            ffi::vsl_frame_unlock(self.ptr);
             ffi::vsl_frame_release(self.ptr);
         };
     }
