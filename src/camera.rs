@@ -317,6 +317,18 @@ impl CameraBuffer<'_> {
     pub fn length(&self) -> usize {
         usize::try_from(unsafe { ffi::vsl_camera_buffer_length(self.ptr) }).unwrap_or(0)
     }
+
+    pub fn width(&self) -> i32 {
+        self.parent.width()
+    }
+
+    pub fn height(&self) -> i32 {
+        self.parent.height()
+    }
+
+    pub fn format(&self) -> FourCC {
+        self.parent.format()
+    }
 }
 
 impl Drop for CameraBuffer<'_> {
@@ -392,11 +404,6 @@ mod tests {
         let dma = buf.dma()?;
         let mem = dma.memory_map()?;
         println!("mapped memory {:?}", mem);
-
-        // let img = mem.read(
-        //     |x, dim| load_image(x, dim.unwrap()),
-        //     Some((cam.width(), cam.height())),
-        // )?;
 
         Ok(())
     }
