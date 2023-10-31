@@ -4,7 +4,7 @@ This crate provides a safe Rust API for the VideoStream Library which is part of
 
 # Requirements
 
-- libvideostream version 1.3.0 or newer.
+- libvideostream version 1.3.9 or newer.
 
 # Licensing
 
@@ -12,7 +12,7 @@ The Rust bindings are dual-licensed under the AGPL-3.0 or the DeepView AI Middle
 
 # Quick Start
 
-Make sure you have the native videostream library installed, version 1.3.0 or newer is required.
+Make sure you have the native videostream library installed, version 1.3.9 or newer is required.
 
 # DeepView AI Middleware
 

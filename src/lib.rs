@@ -11,6 +11,7 @@
 
 use std::{error::Error, ffi::CStr, fmt};
 use videostream_sys as ffi;
+
 /// The frame module provides the common frame handling functionality.
 pub mod frame;
 
@@ -20,7 +21,14 @@ pub mod client;
 /// The host module provides the frame sharing functionality.
 pub mod host;
 
+/// The encoder module provides accelerated video encoding to h.264 and h.265
 pub mod encoder;
+
+/// The camera module provides camera capture capabilities.
+pub mod camera;
+
+/// The fourcc module provides portable handling of fourcc codes.
+pub mod fourcc;
 
 #[derive(Debug)]
 struct NullStringError;
@@ -39,18 +47,7 @@ pub fn version() -> &'static str {
 }
 
 pub fn timestamp() -> i64 {
-    return unsafe { ffi::vsl_timestamp() };
-}
-
-pub fn fourcc(code: &str) -> u32 {
-    let bytes = code.as_bytes();
-    let mut fourcc: u32 = 0;
-
-    for i in 0..4 {
-        fourcc |= (bytes[i] as u32) << (i * 8);
-    }
-
-    return fourcc;
+    unsafe { ffi::vsl_timestamp() }
 }
 
 #[cfg(test)]
