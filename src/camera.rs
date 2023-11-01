@@ -191,13 +191,34 @@ impl CameraReader {
             return Err(Box::new(err));
         }
 
-        Ok(CameraReader {
+        let cam = CameraReader {
             ptr,
             width,
             height,
             format: FourCC::from(format),
             mirror: camera.mirror,
-        })
+        };
+
+        match cam.mirror {
+            Mirror::None => {
+                cam.set_mirror_h(false)?;
+                cam.set_mirror_v(false)?;
+            }
+            Mirror::Horizontal => {
+                cam.set_mirror_h(true)?;
+                cam.set_mirror_v(false)?;
+            }
+            Mirror::Vertical => {
+                cam.set_mirror_h(false)?;
+                cam.set_mirror_v(true)?;
+            }
+            Mirror::Both => {
+                cam.set_mirror_h(true)?;
+                cam.set_mirror_v(true)?;
+            }
+        }
+
+        Ok(cam)
     }
 
     pub fn start(&self) -> Result<(), Box<dyn Error>> {
@@ -432,7 +453,7 @@ mod tests {
             let buf = cam.read()?;
 
             let now = Instant::now();
-            let dma = unsafe { buf.dmabuf() };
+            let dma = buf.dmabuf();
             let mem = dma.memory_map()?;
             let stats = mem.read(pixel_metrics, Some((buf.width(), buf.height())))?;
             let elapsed = now.elapsed();
