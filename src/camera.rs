@@ -4,7 +4,7 @@ use std::{
     error::Error,
     ffi::{c_int, CString},
     fmt, io,
-    os::fd::FromRawFd,
+    os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd},
 };
 use videostream_sys as ffi;
 
@@ -284,7 +284,7 @@ impl CameraReader {
             return Err(Box::new(err));
         }
 
-        Ok(CameraBuffer { ptr, parent: self })
+        CameraBuffer::new(ptr, self)
     }
 }
 
@@ -299,19 +299,34 @@ impl Drop for CameraReader {
 }
 
 pub struct CameraBuffer<'a> {
-    pub ptr: *mut ffi::vsl_camera_buffer,
-    pub parent: &'a CameraReader,
+    pub fd: OwnedFd,
+    ptr: *mut ffi::vsl_camera_buffer,
+    parent: &'a CameraReader,
 }
 
 impl CameraBuffer<'_> {
-    pub fn dma(&self) -> Result<DmaBuf, Box<dyn Error>> {
-        let fd = unsafe { ffi::vsl_camera_buffer_dma_fd(self.ptr) };
-        if fd == -1 {
+    fn new(
+        ptr: *mut ffi::vsl_camera_buffer,
+        parent: &CameraReader,
+    ) -> Result<CameraBuffer, Box<dyn Error>> {
+        // The file descriptor returned by vsl_camera_buffer_dma_fd must be duplicated
+        // so that we can manage ownership within Rust using OwnedFd.
+        let rawfd = unsafe { nix::libc::dup(ffi::vsl_camera_buffer_dma_fd(ptr)) };
+        if rawfd == -1 {
             let err = io::Error::last_os_error();
             return Err(Box::new(err));
         }
 
-        Ok(unsafe { DmaBuf::from_raw_fd(fd) })
+        let fd = unsafe { OwnedFd::from_raw_fd(rawfd) };
+        Ok(CameraBuffer { fd, ptr, parent })
+    }
+
+    fn fd(&self) -> BorrowedFd<'_> {
+        self.fd.as_fd()
+    }
+
+    unsafe fn dmabuf(&self) -> DmaBuf {
+        DmaBuf::from_raw_fd(self.fd.as_raw_fd())
     }
 
     pub fn length(&self) -> usize {
@@ -341,6 +356,7 @@ impl Drop for CameraBuffer<'_> {
 mod tests {
     use super::*;
     use serial_test::serial;
+    use std::time::Instant;
 
     #[ignore = "test requires maivin 2 hardware (run with --include-ignored to enable)"]
     #[test]
@@ -398,13 +414,47 @@ mod tests {
 
         cam.start()?;
 
-        let buf = cam.read()?;
-        println!("got camera buffer {:?}", buf.ptr);
+        for _ in 0..100 {
+            let buf = cam.read()?;
 
-        let dma = buf.dma()?;
-        let mem = dma.memory_map()?;
-        println!("mapped memory {:?}", mem);
+            let now = Instant::now();
+            let dma = unsafe { buf.dmabuf() };
+            let mem = dma.memory_map()?;
+            let stats = mem.read(pixel_metrics, Some((buf.width(), buf.height())))?;
+            let elapsed = now.elapsed();
+
+            println!(
+                "camera y-component min {} max {} avg {} [elapsed: {:.2?}]",
+                stats.0, stats.1, stats.2, elapsed
+            );
+        }
 
         Ok(())
+    }
+
+    fn pixel_metrics(img: &[u8], dim: Option<(i32, i32)>) -> Result<(u8, u8, u8), Box<dyn Error>> {
+        let width = dim.unwrap_or_default().0;
+        let height = dim.unwrap_or_default().1;
+
+        let mut y_min = 255;
+        let mut y_max = 0;
+        let mut y_avg = 0;
+
+        for y in 0..height {
+            for x in (0..width).step_by(2) {
+                let y = img[(y * width + x) as usize];
+                if y < y_min {
+                    y_min = y;
+                }
+                if y > y_max {
+                    y_max = y;
+                }
+                y_avg += y as i32;
+            }
+        }
+
+        y_avg /= width * height / 2;
+
+        Ok((y_min, y_max, y_avg as u8))
     }
 }

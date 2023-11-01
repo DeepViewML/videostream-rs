@@ -28,6 +28,7 @@ members = ["videostream-sys"]
 [dependencies]
 videostream-sys = {version = "0.0.0", path = "videostream-sys"}
 dma-buf = "0.3.0"
+nix = "0.27.1"
 
 [dev-dependencies]
 rand = "0.8.5"
