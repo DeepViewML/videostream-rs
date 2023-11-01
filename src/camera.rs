@@ -321,12 +321,12 @@ impl CameraBuffer<'_> {
         Ok(CameraBuffer { fd, ptr, parent })
     }
 
-    fn fd(&self) -> BorrowedFd<'_> {
+    pub fn fd(&self) -> BorrowedFd<'_> {
         self.fd.as_fd()
     }
 
-    unsafe fn dmabuf(&self) -> DmaBuf {
-        DmaBuf::from_raw_fd(self.fd.as_raw_fd())
+    pub fn dmabuf(&self) -> DmaBuf {
+        unsafe { DmaBuf::from_raw_fd(self.fd.as_raw_fd()) }
     }
 
     pub fn length(&self) -> usize {
@@ -349,6 +349,20 @@ impl CameraBuffer<'_> {
 impl Drop for CameraBuffer<'_> {
     fn drop(&mut self) {
         let _ = unsafe { ffi::vsl_camera_release_buffer(self.parent.ptr, self.ptr) };
+    }
+}
+
+impl fmt::Display for CameraBuffer<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}x{} {} fd:{:?} ptr:{:?}",
+            self.width(),
+            self.height(),
+            self.format(),
+            self.fd,
+            self.ptr
+        )
     }
 }
 
