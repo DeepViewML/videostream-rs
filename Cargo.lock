@@ -318,6 +318,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "readme-rustdocifier"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08ad765b21a08b1a8e5cdce052719188a23772bcbefb3c439f0baaf62c56ceac"
+
+[[package]]
 name = "redox_syscall"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -410,6 +416,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
 
 [[package]]
+name = "unix-ts"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a4f7e2a0ec19e18b93b3801b5271311f8f924527df3775067e039a488e48965"
+dependencies = [
+ "readme-rustdocifier",
+ "unix-ts-macros",
+]
+
+[[package]]
+name = "unix-ts-macros"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "778a90a350e66d5df234e112037b7e67733e31db6d5cc280e7812a58b5088848"
+dependencies = [
+ "readme-rustdocifier",
+]
+
+[[package]]
 name = "videostream"
 version = "0.0.0"
 dependencies = [
@@ -417,6 +442,7 @@ dependencies = [
  "nix 0.27.1",
  "rand",
  "serial_test",
+ "unix-ts",
  "videostream-sys",
 ]
 

@@ -6,6 +6,7 @@ use std::{
     fmt, io,
     os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd},
 };
+use unix_ts::Timestamp;
 use videostream_sys as ffi;
 
 type CameraFormats = Vec<FourCC>;
@@ -364,6 +365,16 @@ impl CameraBuffer<'_> {
 
     pub fn format(&self) -> FourCC {
         self.parent.format()
+    }
+
+    pub fn timestamp(&self) -> Timestamp {
+        let mut sec: i64 = 0;
+        let mut ns: i64 = 0;
+        unsafe {
+            ffi::vsl_camera_buffer_timestamp(self.ptr, &mut sec, &mut ns);
+        }
+
+        Timestamp::new(sec, ns as u32)
     }
 }
 

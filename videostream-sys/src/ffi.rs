@@ -398,7 +398,7 @@ extern "C" {
     pub fn vsl_camera_open_device(filename: *const ::std::os::raw::c_char) -> *mut vsl_camera;
 }
 extern "C" {
-    #[doc = " Initialized the camera device in @param ctx for streaming\n and allocate camera buffers.\n\n Then requests the camera to stream at the requested @param width\n and @param height using the requested @param fourcc code.\n\n The @param width, @param height, @param fourcc parameters\n will be set to the actual width and height and fourcc that\n the camera driver sets the device to.\n\n Returns -1 if an error is encountered when initializing the camera to stream,\n otherwise returns 0\n\n @memberof VSLCamera"]
+    #[doc = " Initialized the camera device in @param ctx for streaming\n and allocate camera buffers.\n\n Then requests the camera to stream at the requested @param width\n and @param height using the requested @param fourcc code.\n\n If @param width, @param height, or @param fourcc are 0, the respective value\n use the default provided by the driver\n\n The @param width, @param height, @param fourcc parameters\n will be set to the actual width and height and fourcc that\n the camera driver sets the device to.\n\n Returns -1 if an error is encountered when initializing the camera to stream,\n otherwise returns 0\n\n @memberof VSLCamera"]
     pub fn vsl_camera_init_device(
         ctx: *mut vsl_camera,
         width: *mut ::std::os::raw::c_int,
@@ -459,7 +459,7 @@ extern "C" {
     pub fn vsl_camera_buffer_dma_fd(buffer: *const vsl_camera_buffer) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[doc = " Returns the phys addr of the camera buffer\n\n If the device does not support dmabuf, returns 0\n\n @memberof VSLCamera"]
+    #[doc = " Returns the phys addr of the camera buffer\n\n If the device does not support physical address, returns 0\n\n @memberof VSLCamera"]
     pub fn vsl_camera_buffer_phys_addr(buffer: *const vsl_camera_buffer) -> u64;
 }
 extern "C" {
@@ -469,6 +469,14 @@ extern "C" {
 extern "C" {
     #[doc = " Returns the fourcc code of the camera buffer\n\n @memberof VSLCamera"]
     pub fn vsl_camera_buffer_fourcc(buffer: *const vsl_camera_buffer) -> u32;
+}
+extern "C" {
+    #[doc = " Reads the timestamp of the camera buffer into @param seconds and @param\n nanoseconds.  The seconds are relative to the monotonic time when the frame\n was captured, nanoseconds are the sub-seconds in nanoseconds."]
+    pub fn vsl_camera_buffer_timestamp(
+        buffer: *const vsl_camera_buffer,
+        seconds: *mut i64,
+        nanoseconds: *mut i64,
+    );
 }
 extern "C" {
     #[doc = " Lists the supported single planar formats of\n the camera into @param codes as fourcc codes"]

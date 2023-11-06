@@ -976,6 +976,9 @@ vsl_camera_open_device(const char* filename);
  * Then requests the camera to stream at the requested @param width
  * and @param height using the requested @param fourcc code.
  *
+ * If @param width, @param height, or @param fourcc are 0, the respective value
+ * use the default provided by the driver
+ *
  * The @param width, @param height, @param fourcc parameters
  * will be set to the actual width and height and fourcc that
  * the camera driver sets the device to.
@@ -1147,7 +1150,7 @@ vsl_camera_buffer_dma_fd(const vsl_camera_buffer* buffer);
 /**
  * Returns the phys addr of the camera buffer
  *
- * If the device does not support dmabuf, returns 0
+ * If the device does not support physical address, returns 0
  *
  * @memberof VSLCamera
  */
@@ -1175,6 +1178,18 @@ VSL_AVAILABLE_SINCE_1_3
 VSL_API
 uint32_t
 vsl_camera_buffer_fourcc(const vsl_camera_buffer* buffer);
+
+/**
+ * Reads the timestamp of the camera buffer into @param seconds and @param
+ * nanoseconds.  The seconds are relative to the monotonic time when the frame
+ * was captured, nanoseconds are the sub-seconds in nanoseconds.
+ */
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+void
+vsl_camera_buffer_timestamp(const vsl_camera_buffer* buffer,
+                            int64_t*                 seconds,
+                            int64_t*                 nanoseconds);
 
 /**
  * Lists the supported single planar formats of
