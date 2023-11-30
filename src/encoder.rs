@@ -74,7 +74,7 @@ impl Encoder {
         &self,
         source: &frame::Frame,
         destination: &frame::Frame,
-        crop_region: &mut VSLRect,
+        crop_region: &VSLRect,
         keyframe: *mut c_int,
     ) -> i32 {
         return unsafe {
@@ -82,7 +82,7 @@ impl Encoder {
                 self.ptr,
                 source.get_ptr(),
                 destination.get_ptr(),
-                &mut crop_region.rect,
+                &crop_region.rect,
                 keyframe,
             )
         };
