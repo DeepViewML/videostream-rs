@@ -1,9 +1,9 @@
-use crate::client;
+use crate::{camera::CameraBuffer, client};
 use std::{
     error::Error,
     ffi::{CStr, CString},
     io,
-    os::fd::RawFd,
+    os::fd::{AsRawFd, RawFd},
     path::Path,
     ptr, slice,
 };
@@ -226,6 +226,26 @@ impl TryFrom<*mut ffi::VSLFrame> for Frame {
             return Err(());
         }
         return Ok(Frame { ptr });
+    }
+}
+impl TryFrom<&CameraBuffer<'_>> for Frame {
+    type Error = Box<dyn Error>;
+
+    fn try_from(buf: &CameraBuffer<'_>) -> Result<Self, Self::Error> {
+        let frame = match Frame::new(
+            buf.width().try_into().unwrap(),
+            buf.height().try_into().unwrap(),
+            0,
+            buf.format().to_string().as_str(),
+        ) {
+            Ok(f) => f,
+            Err(e) => return Err(e),
+        };
+        match frame.attach(buf.fd().as_raw_fd(), 0, 0) {
+            Ok(_) => (),
+            Err(e) => return Err(e),
+        }
+        return Ok(frame);
     }
 }
 
