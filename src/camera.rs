@@ -322,6 +322,7 @@ impl Drop for CameraReader {
 
 pub struct CameraBuffer<'a> {
     pub fd: OwnedFd,
+    pub original_fd: c_int,
     ptr: *mut ffi::vsl_camera_buffer,
     parent: &'a CameraReader,
 }
@@ -333,14 +334,20 @@ impl CameraBuffer<'_> {
     ) -> Result<CameraBuffer, Box<dyn Error>> {
         // The file descriptor returned by vsl_camera_buffer_dma_fd must be duplicated
         // so that we can manage ownership within Rust using OwnedFd.
-        let rawfd = unsafe { nix::libc::dup(ffi::vsl_camera_buffer_dma_fd(ptr)) };
+        let original_fd = unsafe { ffi::vsl_camera_buffer_dma_fd(ptr) };
+        let rawfd = unsafe { nix::libc::dup(original_fd) };
         if rawfd == -1 {
             let err = io::Error::last_os_error();
             return Err(Box::new(err));
         }
 
         let fd = unsafe { OwnedFd::from_raw_fd(rawfd) };
-        Ok(CameraBuffer { fd, ptr, parent })
+        Ok(CameraBuffer {
+            fd,
+            original_fd,
+            ptr,
+            parent,
+        })
     }
 
     pub fn fd(&self) -> BorrowedFd<'_> {
