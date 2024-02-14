@@ -322,7 +322,6 @@ impl Drop for CameraReader {
 
 pub struct CameraBuffer<'a> {
     raw_fd: RawFd,
-    fd: Option<OwnedFd>,
     ptr: *mut ffi::vsl_camera_buffer,
     parent: &'a CameraReader,
 }
@@ -335,26 +334,16 @@ impl CameraBuffer<'_> {
         let original_fd: RawFd = unsafe { ffi::vsl_camera_buffer_dma_fd(ptr) };
         Ok(CameraBuffer {
             raw_fd: original_fd,
-            fd: None,
             ptr,
             parent,
         })
     }
 
-    pub fn fd(&self) -> Result<BorrowedFd<'_>, Box<dyn Error>> {
-        // The file descriptor returned by vsl_camera_buffer_dma_fd must be duplicated
-        // so that we can manage ownership within Rust using OwnedFd.
-        // The file descriptor is duplicated at most once per CameraBuffer
-        if self.fd.is_none() {
-            let rawfd = unsafe { nix::libc::dup(self.raw_fd) };
-            if rawfd == -1 {
-                let err = io::Error::last_os_error();
-                return Err(Box::new(err));
-            }
-            let fd = unsafe { OwnedFd::from_raw_fd(rawfd) };
-            self.fd = Some(fd)
-        }
-        Ok(self.fd.unwrap().as_fd())
+    pub fn fd(&self) -> BorrowedFd<'_> {
+        // the raw_fd allocated by v4l2 will stay valid until the CameraReader is
+        // closed. The camerabuffer lifetime is at most the same as the CameraReader, so
+        // this borrow is safe
+        unsafe { BorrowedFd::borrow_raw(self.raw_fd) }
     }
 
     pub fn dmabuf(&self) -> DmaBuf {
