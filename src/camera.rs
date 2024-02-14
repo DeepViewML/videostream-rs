@@ -4,7 +4,7 @@ use std::{
     error::Error,
     ffi::{c_int, CString},
     fmt, io,
-    os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd},
+    os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd},
 };
 use unix_ts::Timestamp;
 use videostream_sys as ffi;
@@ -321,8 +321,8 @@ impl Drop for CameraReader {
 }
 
 pub struct CameraBuffer<'a> {
-    pub fd: OwnedFd,
-    pub original_fd: c_int,
+    raw_fd: RawFd,
+    fd: Option<OwnedFd>,
     ptr: *mut ffi::vsl_camera_buffer,
     parent: &'a CameraReader,
 }
@@ -332,30 +332,37 @@ impl CameraBuffer<'_> {
         ptr: *mut ffi::vsl_camera_buffer,
         parent: &CameraReader,
     ) -> Result<CameraBuffer, Box<dyn Error>> {
-        // The file descriptor returned by vsl_camera_buffer_dma_fd must be duplicated
-        // so that we can manage ownership within Rust using OwnedFd.
-        let original_fd = unsafe { ffi::vsl_camera_buffer_dma_fd(ptr) };
-        let rawfd = unsafe { nix::libc::dup(original_fd) };
-        if rawfd == -1 {
-            let err = io::Error::last_os_error();
-            return Err(Box::new(err));
-        }
-
-        let fd = unsafe { OwnedFd::from_raw_fd(rawfd) };
+        let original_fd: RawFd = unsafe { ffi::vsl_camera_buffer_dma_fd(ptr) };
         Ok(CameraBuffer {
-            fd,
-            original_fd,
+            raw_fd: original_fd,
+            fd: None,
             ptr,
             parent,
         })
     }
 
-    pub fn fd(&self) -> BorrowedFd<'_> {
-        self.fd.as_fd()
+    pub fn fd(&self) -> Result<BorrowedFd<'_>, Box<dyn Error>> {
+        // The file descriptor returned by vsl_camera_buffer_dma_fd must be duplicated
+        // so that we can manage ownership within Rust using OwnedFd.
+        // The file descriptor is duplicated at most once per CameraBuffer
+        if self.fd.is_none() {
+            let rawfd = unsafe { nix::libc::dup(self.raw_fd) };
+            if rawfd == -1 {
+                let err = io::Error::last_os_error();
+                return Err(Box::new(err));
+            }
+            let fd = unsafe { OwnedFd::from_raw_fd(rawfd) };
+            self.fd = Some(fd)
+        }
+        Ok(self.fd.unwrap().as_fd())
     }
 
     pub fn dmabuf(&self) -> DmaBuf {
-        unsafe { DmaBuf::from_raw_fd(self.fd.as_raw_fd()) }
+        unsafe { DmaBuf::from_raw_fd(self.raw_fd) }
+    }
+
+    pub fn rawfd(&self) -> RawFd {
+        self.raw_fd
     }
 
     pub fn length(&self) -> usize {
