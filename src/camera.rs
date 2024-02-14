@@ -4,7 +4,7 @@ use std::{
     error::Error,
     ffi::{c_int, CString},
     fmt, io,
-    os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd},
+    os::fd::{BorrowedFd, FromRawFd, RawFd},
 };
 use unix_ts::Timestamp;
 use videostream_sys as ffi;
@@ -395,7 +395,7 @@ impl fmt::Display for CameraBuffer<'_> {
             self.width(),
             self.height(),
             self.format(),
-            self.fd,
+            self.rawfd(),
             self.ptr
         )
     }
