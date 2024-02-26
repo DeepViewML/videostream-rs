@@ -340,9 +340,9 @@ impl CameraBuffer<'_> {
     }
 
     pub fn fd(&self) -> BorrowedFd<'_> {
-        // the raw_fd allocated by v4l2 will stay valid until the CameraReader is
-        // closed. The camerabuffer lifetime is at most the same as the CameraReader, so
-        // this borrow is safe
+        // SAFETY: the raw_fd allocated by v4l2 will stay valid until the CameraReader
+        // is closed. The camerabuffer lifetime is at most the same as the
+        // CameraReader, so this borrow is safe
         unsafe { BorrowedFd::borrow_raw(self.raw_fd) }
     }
 
