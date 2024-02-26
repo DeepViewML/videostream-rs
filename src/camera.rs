@@ -4,7 +4,7 @@ use std::{
     error::Error,
     ffi::{c_int, CString},
     fmt, io,
-    os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd},
+    os::fd::{BorrowedFd, FromRawFd, RawFd},
 };
 use unix_ts::Timestamp;
 use videostream_sys as ffi;
@@ -321,7 +321,7 @@ impl Drop for CameraReader {
 }
 
 pub struct CameraBuffer<'a> {
-    pub fd: OwnedFd,
+    raw_fd: RawFd,
     ptr: *mut ffi::vsl_camera_buffer,
     parent: &'a CameraReader,
 }
@@ -331,24 +331,27 @@ impl CameraBuffer<'_> {
         ptr: *mut ffi::vsl_camera_buffer,
         parent: &CameraReader,
     ) -> Result<CameraBuffer, Box<dyn Error>> {
-        // The file descriptor returned by vsl_camera_buffer_dma_fd must be duplicated
-        // so that we can manage ownership within Rust using OwnedFd.
-        let rawfd = unsafe { nix::libc::dup(ffi::vsl_camera_buffer_dma_fd(ptr)) };
-        if rawfd == -1 {
-            let err = io::Error::last_os_error();
-            return Err(Box::new(err));
-        }
-
-        let fd = unsafe { OwnedFd::from_raw_fd(rawfd) };
-        Ok(CameraBuffer { fd, ptr, parent })
+        let original_fd: RawFd = unsafe { ffi::vsl_camera_buffer_dma_fd(ptr) };
+        Ok(CameraBuffer {
+            raw_fd: original_fd,
+            ptr,
+            parent,
+        })
     }
 
     pub fn fd(&self) -> BorrowedFd<'_> {
-        self.fd.as_fd()
+        // SAFETY: the raw_fd allocated by v4l2 will stay valid until the CameraReader
+        // is closed. The camerabuffer lifetime is at most the same as the
+        // CameraReader, so this borrow is safe
+        unsafe { BorrowedFd::borrow_raw(self.raw_fd) }
     }
 
     pub fn dmabuf(&self) -> DmaBuf {
-        unsafe { DmaBuf::from_raw_fd(self.fd.as_raw_fd()) }
+        unsafe { DmaBuf::from_raw_fd(self.raw_fd) }
+    }
+
+    pub fn rawfd(&self) -> RawFd {
+        self.raw_fd
     }
 
     pub fn length(&self) -> usize {
@@ -392,7 +395,7 @@ impl fmt::Display for CameraBuffer<'_> {
             self.width(),
             self.height(),
             self.format(),
-            self.fd,
+            self.rawfd(),
             self.ptr
         )
     }
