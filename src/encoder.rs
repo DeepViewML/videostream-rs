@@ -15,7 +15,7 @@ pub struct VSLRect {
 }
 
 #[derive(Clone, Debug, PartialEq, Copy)]
-pub enum VSLEncodeProfile {
+pub enum VSLEncoderProfileEnum {
     Auto = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_AUTO as isize,
     Kbps1000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_1000_KBPS as isize,
     Kbps2000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_2000_KBPS as isize,
