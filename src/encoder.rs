@@ -14,6 +14,22 @@ pub struct VSLRect {
     rect: ffi::vsl_rect,
 }
 
+#[derive(Clone, Debug, PartialEq, Copy)]
+pub enum VSLEncodeProfile {
+    Auto = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_AUTO as isize,
+    Kbps1000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_1000_KBPS as isize,
+    Kbps2000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_2000_KBPS as isize,
+    Kbps4000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_4000_KBPS as isize,
+    Kbps8000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_8000_KBPS as isize,
+    Kbps10000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_10000_KBPS as isize,
+    Kbps20000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_20000_KBPS as isize,
+    Kbps40000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_40000_KBPS as isize,
+    Kbps80000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_80000_KBPS as isize,
+    Kbps100000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_100000_KBPS as isize,
+    Kbps200000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_200000_KBPS as isize,
+    Kbps400000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_400000_KBPS as isize,
+}
+
 impl VSLRect {
     pub fn new(x: c_int, y: c_int, width: c_int, height: c_int) -> Self {
         return VSLRect {
