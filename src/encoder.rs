@@ -18,17 +18,10 @@ pub struct VSLRect {
 #[derive(Clone, Debug, PartialEq, Copy)]
 pub enum VSLEncoderProfileEnum {
     Auto = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_AUTO,
-    Kbps1000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_1000_KBPS,
-    Kbps2000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_2000_KBPS,
-    Kbps4000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_4000_KBPS,
-    Kbps8000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_8000_KBPS,
-    Kbps10000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_10000_KBPS,
-    Kbps20000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_20000_KBPS,
-    Kbps40000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_40000_KBPS,
-    Kbps80000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_80000_KBPS,
+    Kbps5000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_5000_KBPS,
+    Kbps25000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_25000_KBPS,
+    Kbps50000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_50000_KBPS,
     Kbps100000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_100000_KBPS,
-    Kbps200000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_200000_KBPS,
-    Kbps400000 = ffi::vsl_encode_profile_VSL_ENCODE_PROFILE_400000_KBPS,
 }
 
 impl VSLRect {
