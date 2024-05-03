@@ -261,6 +261,10 @@ typedef struct vsl_rect {
 // ie. for HEVC still image encoding MSP profile is used.
 typedef enum vsl_encode_profile {
     VSL_ENCODE_PROFILE_AUTO, // Encoder default, auto settings
+    VSL_ENCODE_PROFILE_5000_KBPS,
+    VSL_ENCODE_PROFILE_25000_KBPS,
+    VSL_ENCODE_PROFILE_50000_KBPS,
+    VSL_ENCODE_PROFILE_100000_KBPS,
 } VSLEncoderProfile;
 
 /**
