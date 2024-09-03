@@ -28,6 +28,13 @@ pub struct vsl_encoder {
 }
 #[doc = " The VSLEncoder object represents encoder instance.\n"]
 pub type VSLEncoder = vsl_encoder;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct vsl_decoder {
+    _unused: [u8; 0],
+}
+#[doc = " The VSLEncoder object represents encoder instance.\n"]
+pub type VSLDecoder = vsl_decoder;
 #[doc = " The VSLRect structure represents a rectangle region of a frame and is used to\n define cropping regions for sub-frames."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -497,4 +504,18 @@ extern "C" {
         codes: *mut u32,
         size: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn vsl_decoder_create(outputFourcc: u32, fps: ::std::os::raw::c_int) -> *mut VSLDecoder;
+}
+extern "C" {
+    pub fn vsl_decode_frame(
+        decoder: *mut VSLDecoder,
+        data: *const ::std::os::raw::c_void,
+        data_length: ::std::os::raw::c_uint,
+        output_frame: *mut *mut VSLFrame,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn vsl_decoder_release(decoder: *mut VSLDecoder) -> ::std::os::raw::c_int;
 }

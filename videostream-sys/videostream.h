@@ -231,6 +231,12 @@ typedef struct vsl_frame VSLFrame;
 typedef struct vsl_encoder VSLEncoder;
 
 /**
+ * The VSLEncoder object represents encoder instance.
+ *
+ */
+typedef struct vsl_decoder VSLDecoder;
+
+/**
  * The VSLRect structure represents a rectangle region of a frame and is used to
  * define cropping regions for sub-frames.
  */
@@ -266,6 +272,11 @@ typedef enum vsl_encode_profile {
     VSL_ENCODE_PROFILE_50000_KBPS,
     VSL_ENCODE_PROFILE_100000_KBPS,
 } VSLEncoderProfile;
+
+typedef enum {
+    VSL_DEC_H264,
+    VSL_DEC_HEVC,
+} VSLDecoderCodec;
 
 /**
  * Function pointer definition which will be called as part of
@@ -1212,6 +1223,24 @@ VSL_AVAILABLE_SINCE_1_3
 VSL_API
 int
 vsl_camera_enum_mplane_fmts(const vsl_camera* ctx, uint32_t* codes, int size);
+
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+VSLDecoder*
+vsl_decoder_create(uint32_t outputFourcc, int fps);
+
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_decode_frame(VSLDecoder*  decoder,
+                 const void*  data,
+                 unsigned int data_length,
+                 VSLFrame**   output_frame);
+
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_decoder_release(VSLDecoder* decoder);
 
 #ifdef __cplusplus
 }

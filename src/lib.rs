@@ -24,6 +24,9 @@ pub mod host;
 /// The encoder module provides accelerated video encoding to h.264 and h.265
 pub mod encoder;
 
+/// The encoder module provides accelerated video decoding from h.264 and h.265
+pub mod decoder;
+
 /// The camera module provides camera capture capabilities.
 pub mod camera;
 
