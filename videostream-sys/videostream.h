@@ -1229,13 +1229,35 @@ VSL_API
 VSLDecoder*
 vsl_decoder_create(uint32_t outputFourcc, int fps);
 
+typedef enum {
+    VSL_DEC_SUCCESS   = 0x0,
+    VSL_DEC_ERR       = 0x1,
+    VSL_DEC_INIT_INFO = 0x2,
+    VSL_DEC_FRAME_DEC = 0x4,
+} VSLDecoderRetCode;
+
 VSL_AVAILABLE_SINCE_1_3
 VSL_API
-int
+VSLDecoderRetCode
 vsl_decode_frame(VSLDecoder*  decoder,
                  const void*  data,
                  unsigned int data_length,
+                 size_t*      bytes_used,
                  VSLFrame**   output_frame);
+
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_decoder_width(VSLDecoder*  decoder);
+
+VSL_AVAILABLE_SINCE_1_3
+VSL_API
+int
+vsl_decoder_height(VSLDecoder* decoder);
+
+VSL_API
+VSLRect
+vsl_decoder_crop(VSLDecoder* decoder);
 
 VSL_AVAILABLE_SINCE_1_3
 VSL_API

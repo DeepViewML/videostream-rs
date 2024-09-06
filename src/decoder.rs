@@ -25,11 +25,13 @@ impl Decoder {
         let mut output_frame: *mut vsl_frame = null_mut();
         let output_frame_ptr: *mut *mut vsl_frame = &mut output_frame;
         let len = data.len() as u32;
-        let bytes_used = unsafe {
+        let mut bytes_used: usize = 0;
+        let ret_code = unsafe {
             ffi::vsl_decode_frame(
                 self.ptr,
                 data.as_ptr() as *const c_void,
                 len,
+                &mut bytes_used,
                 output_frame_ptr,
             )
         };

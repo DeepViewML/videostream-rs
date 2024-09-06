@@ -508,13 +508,28 @@ extern "C" {
 extern "C" {
     pub fn vsl_decoder_create(outputFourcc: u32, fps: ::std::os::raw::c_int) -> *mut VSLDecoder;
 }
+pub const VSLDecoderRetCode_VSL_DEC_SUCCESS: VSLDecoderRetCode = 0;
+pub const VSLDecoderRetCode_VSL_DEC_ERR: VSLDecoderRetCode = 1;
+pub const VSLDecoderRetCode_VSL_DEC_INIT_INFO: VSLDecoderRetCode = 2;
+pub const VSLDecoderRetCode_VSL_DEC_FRAME_DEC: VSLDecoderRetCode = 4;
+pub type VSLDecoderRetCode = ::std::os::raw::c_uint;
 extern "C" {
     pub fn vsl_decode_frame(
         decoder: *mut VSLDecoder,
         data: *const ::std::os::raw::c_void,
         data_length: ::std::os::raw::c_uint,
+        bytes_used: *mut usize,
         output_frame: *mut *mut VSLFrame,
-    ) -> ::std::os::raw::c_int;
+    ) -> VSLDecoderRetCode;
+}
+extern "C" {
+    pub fn vsl_decoder_width(decoder: *mut VSLDecoder) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn vsl_decoder_height(decoder: *mut VSLDecoder) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn vsl_decoder_crop(decoder: *mut VSLDecoder) -> VSLRect;
 }
 extern "C" {
     pub fn vsl_decoder_release(decoder: *mut VSLDecoder) -> ::std::os::raw::c_int;
