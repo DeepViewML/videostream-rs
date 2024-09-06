@@ -11,7 +11,7 @@ pub struct VSLEncoderProfile {
 }
 
 pub struct VSLRect {
-    rect: ffi::vsl_rect,
+    pub(crate) rect: ffi::vsl_rect,
 }
 
 #[repr(u32)]

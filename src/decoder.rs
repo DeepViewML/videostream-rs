@@ -41,7 +41,11 @@ impl Decoder {
     }
 
     pub fn crop(&self) -> VSLRect {
-        unsafe { ffi::vsl_decoder_crop(self.ptr) }
+        unsafe {
+            VSLRect {
+                rect: ffi::vsl_decoder_crop(self.ptr),
+            }
+        }
     }
 
     pub fn decode_frame(
