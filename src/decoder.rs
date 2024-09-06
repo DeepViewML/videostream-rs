@@ -4,7 +4,10 @@ use std::{
     io,
     ptr::null_mut,
 };
-use videostream_sys::{self as ffi, vsl_frame, VSLDecoderRetCode_VSL_DEC_ERR};
+use videostream_sys::{
+    self as ffi, vsl_frame, VSLDecoderRetCode_VSL_DEC_ERR, VSLDecoderRetCode_VSL_DEC_FRAME_DEC,
+    VSLDecoderRetCode_VSL_DEC_INIT_INFO,
+};
 pub struct Decoder {
     ptr: *mut ffi::VSLDecoder,
 }
