@@ -21,7 +21,7 @@ impl Decoder {
         };
     }
 
-    pub fn decode_frame(&self, data: &[u8]) -> Result<(i32, Option<Frame>), Box<dyn Error>> {
+    pub fn decode_frame(&self, data: &[u8]) -> Result<(usize, Option<Frame>), Box<dyn Error>> {
         let mut output_frame: *mut vsl_frame = null_mut();
         let output_frame_ptr: *mut *mut vsl_frame = &mut output_frame;
         let len = data.len() as u32;
