@@ -68,7 +68,7 @@ impl Decoder {
             return_msg = DecodeReturnCode::Initialized;
         }
 
-        Ok((ret_code, bytes_used, output_frame))
+        Ok((return_msg, bytes_used, output_frame))
     }
 }
 
