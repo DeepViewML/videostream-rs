@@ -50,18 +50,18 @@ impl Decoder {
             Ok(v) => Some(v),
             Err(_) => None,
         };
-        if ret_code & VSLDecoderRetCode_VSL_DEC_ERR {
+        if ret_code & VSLDecoderRetCode_VSL_DEC_ERR > 0 {
             return Err(Box::new(io::Error::new(
                 io::ErrorKind::Other,
                 "Decoder Error",
             )));
         }
         let mut return_msg = DecodeReturnCode::Success;
-        if ret_code & VSLDecoderRetCode_VSL_DEC_FRAME_DEC {
+        if ret_code & VSLDecoderRetCode_VSL_DEC_FRAME_DEC > 0 {
             return_msg = DecodeReturnCode::FrameDecoded;
         }
 
-        if ret_code & VSLDecoderRetCode_VSL_DEC_INIT_INFO {
+        if ret_code & VSLDecoderRetCode_VSL_DEC_INIT_INFO > 0 {
             return_msg = DecodeReturnCode::Initialized;
         }
 
