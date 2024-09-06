@@ -1,4 +1,4 @@
-use crate::{frame::Frame, Error};
+use crate::{encoder::VSLRect, frame::Frame, Error};
 use std::{
     ffi::{c_int, c_void},
     io,
@@ -30,6 +30,18 @@ impl Decoder {
         return Decoder {
             ptr: unsafe { ffi::vsl_decoder_create(input_codec as u32, fps) },
         };
+    }
+
+    pub fn width(&self) -> i32 {
+        unsafe { ffi::vsl_decoder_width(self.ptr) }
+    }
+
+    pub fn height(&self) -> i32 {
+        unsafe { ffi::vsl_decoder_height(self.ptr) }
+    }
+
+    pub fn crop(&self) -> VSLRect {
+        unsafe { ffi::vsl_decoder_crop(self.ptr) }
     }
 
     pub fn decode_frame(
