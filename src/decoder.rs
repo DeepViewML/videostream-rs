@@ -12,13 +12,13 @@ pub struct Decoder {
     ptr: *mut ffi::VSLDecoder,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DecoderInputCodec {
     H264 = 0,
     HEVC = 1,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DecodeReturnCode {
     Success,
     Initialized,
