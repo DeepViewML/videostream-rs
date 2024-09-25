@@ -523,13 +523,13 @@ extern "C" {
     ) -> VSLDecoderRetCode;
 }
 extern "C" {
-    pub fn vsl_decoder_width(decoder: *mut VSLDecoder) -> ::std::os::raw::c_int;
+    pub fn vsl_decoder_width(decoder: *const VSLDecoder) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub fn vsl_decoder_height(decoder: *mut VSLDecoder) -> ::std::os::raw::c_int;
+    pub fn vsl_decoder_height(decoder: *const VSLDecoder) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub fn vsl_decoder_crop(decoder: *mut VSLDecoder) -> VSLRect;
+    pub fn vsl_decoder_crop(decoder: *const VSLDecoder) -> VSLRect;
 }
 extern "C" {
     pub fn vsl_decoder_release(decoder: *mut VSLDecoder) -> ::std::os::raw::c_int;

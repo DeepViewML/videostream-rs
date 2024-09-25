@@ -150,9 +150,10 @@
 #define VSL_VERSION_1_1 VSL_VERSION_ENCODE(1, 1, 0)
 #define VSL_VERSION_1_2 VSL_VERSION_ENCODE(1, 2, 0)
 #define VSL_VERSION_1_3 VSL_VERSION_ENCODE(1, 3, 0)
+#define VSL_VERSION_1_4 VSL_VERSION_ENCODE(1, 4, 0)
 
 #ifndef VSL_TARGET_VERSION
-#define VSL_TARGET_VERSION VSL_VERSION_1_3
+#define VSL_TARGET_VERSION VSL_VERSION_1_4
 #endif
 
 #if VSL_TARGET_VERSION < VSL_VERSION_ENCODE(1, 0, 0)
@@ -197,6 +198,17 @@
 #define VSL_DEPRECATED_SINCE_1_3 VSL_DEPRECATED(1.3)
 #define VSL_DEPRECATED_SINCE_1_3_FOR(replacement) \
     VSL_DEPRECATED_FOR(1.3, replacement)
+#endif
+
+#if VSL_TARGET_VERSION < VSL_VERSION_ENCODE(1, 4, 0)
+#define VSL_AVAILABLE_SINCE_1_4 VSL_UNAVAILABLE(1.4)
+#define VSL_DEPRECATED_SINCE_1_4
+#define VSL_DEPRECATED_SINCE_1_4_FOR(replacement)
+#else
+#define VSL_AVAILABLE_SINCE_1_4
+#define VSL_DEPRECATED_SINCE_1_4 VSL_DEPRECATED(1.4)
+#define VSL_DEPRECATED_SINCE_1_4_FOR(replacement) \
+    VSL_DEPRECATED_FOR(1.4, replacement)
 #endif
 
 #define VSL_FOURCC(a, b, c, d)                                         \
@@ -1224,7 +1236,7 @@ VSL_API
 int
 vsl_camera_enum_mplane_fmts(const vsl_camera* ctx, uint32_t* codes, int size);
 
-VSL_AVAILABLE_SINCE_1_3
+VSL_AVAILABLE_SINCE_1_4
 VSL_API
 VSLDecoder*
 vsl_decoder_create(uint32_t outputFourcc, int fps);
@@ -1236,7 +1248,7 @@ typedef enum {
     VSL_DEC_FRAME_DEC = 0x4,
 } VSLDecoderRetCode;
 
-VSL_AVAILABLE_SINCE_1_3
+VSL_AVAILABLE_SINCE_1_4
 VSL_API
 VSLDecoderRetCode
 vsl_decode_frame(VSLDecoder*  decoder,
@@ -1245,21 +1257,22 @@ vsl_decode_frame(VSLDecoder*  decoder,
                  size_t*      bytes_used,
                  VSLFrame**   output_frame);
 
-VSL_AVAILABLE_SINCE_1_3
+VSL_AVAILABLE_SINCE_1_4
 VSL_API
 int
-vsl_decoder_width(VSLDecoder*  decoder);
+vsl_decoder_width(const VSLDecoder*  decoder);
 
-VSL_AVAILABLE_SINCE_1_3
+VSL_AVAILABLE_SINCE_1_4
 VSL_API
 int
-vsl_decoder_height(VSLDecoder* decoder);
+vsl_decoder_height(const VSLDecoder* decoder);
 
+VSL_AVAILABLE_SINCE_1_4
 VSL_API
 VSLRect
-vsl_decoder_crop(VSLDecoder* decoder);
+vsl_decoder_crop(const VSLDecoder* decoder);
 
-VSL_AVAILABLE_SINCE_1_3
+VSL_AVAILABLE_SINCE_1_4
 VSL_API
 int
 vsl_decoder_release(VSLDecoder* decoder);
