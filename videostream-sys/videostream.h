@@ -150,9 +150,10 @@
 #define VSL_VERSION_1_1 VSL_VERSION_ENCODE(1, 1, 0)
 #define VSL_VERSION_1_2 VSL_VERSION_ENCODE(1, 2, 0)
 #define VSL_VERSION_1_3 VSL_VERSION_ENCODE(1, 3, 0)
+#define VSL_VERSION_1_4 VSL_VERSION_ENCODE(1, 4, 0)
 
 #ifndef VSL_TARGET_VERSION
-#define VSL_TARGET_VERSION VSL_VERSION_1_3
+#define VSL_TARGET_VERSION VSL_VERSION_1_4
 #endif
 
 #if VSL_TARGET_VERSION < VSL_VERSION_ENCODE(1, 0, 0)
@@ -199,6 +200,17 @@
     VSL_DEPRECATED_FOR(1.3, replacement)
 #endif
 
+#if VSL_TARGET_VERSION < VSL_VERSION_ENCODE(1, 4, 0)
+#define VSL_AVAILABLE_SINCE_1_4 VSL_UNAVAILABLE(1.4)
+#define VSL_DEPRECATED_SINCE_1_4
+#define VSL_DEPRECATED_SINCE_1_4_FOR(replacement)
+#else
+#define VSL_AVAILABLE_SINCE_1_4
+#define VSL_DEPRECATED_SINCE_1_4 VSL_DEPRECATED(1.4)
+#define VSL_DEPRECATED_SINCE_1_4_FOR(replacement) \
+    VSL_DEPRECATED_FOR(1.4, replacement)
+#endif
+
 #define VSL_FOURCC(a, b, c, d)                                         \
     ((uint32_t) (a) | ((uint32_t) (b) << 8) | ((uint32_t) (c) << 16) | \
      ((uint32_t) (d) << 24))
@@ -229,6 +241,12 @@ typedef struct vsl_frame VSLFrame;
  *
  */
 typedef struct vsl_encoder VSLEncoder;
+
+/**
+ * The VSLEncoder object represents encoder instance.
+ *
+ */
+typedef struct vsl_decoder VSLDecoder;
 
 /**
  * The VSLRect structure represents a rectangle region of a frame and is used to
@@ -266,6 +284,11 @@ typedef enum vsl_encode_profile {
     VSL_ENCODE_PROFILE_50000_KBPS,
     VSL_ENCODE_PROFILE_100000_KBPS,
 } VSLEncoderProfile;
+
+typedef enum {
+    VSL_DEC_H264,
+    VSL_DEC_HEVC,
+} VSLDecoderCodec;
 
 /**
  * Function pointer definition which will be called as part of
@@ -1212,6 +1235,47 @@ VSL_AVAILABLE_SINCE_1_3
 VSL_API
 int
 vsl_camera_enum_mplane_fmts(const vsl_camera* ctx, uint32_t* codes, int size);
+
+VSL_AVAILABLE_SINCE_1_4
+VSL_API
+VSLDecoder*
+vsl_decoder_create(uint32_t outputFourcc, int fps);
+
+typedef enum {
+    VSL_DEC_SUCCESS   = 0x0,
+    VSL_DEC_ERR       = 0x1,
+    VSL_DEC_INIT_INFO = 0x2,
+    VSL_DEC_FRAME_DEC = 0x4,
+} VSLDecoderRetCode;
+
+VSL_AVAILABLE_SINCE_1_4
+VSL_API
+VSLDecoderRetCode
+vsl_decode_frame(VSLDecoder*  decoder,
+                 const void*  data,
+                 unsigned int data_length,
+                 size_t*      bytes_used,
+                 VSLFrame**   output_frame);
+
+VSL_AVAILABLE_SINCE_1_4
+VSL_API
+int
+vsl_decoder_width(const VSLDecoder*  decoder);
+
+VSL_AVAILABLE_SINCE_1_4
+VSL_API
+int
+vsl_decoder_height(const VSLDecoder* decoder);
+
+VSL_AVAILABLE_SINCE_1_4
+VSL_API
+VSLRect
+vsl_decoder_crop(const VSLDecoder* decoder);
+
+VSL_AVAILABLE_SINCE_1_4
+VSL_API
+int
+vsl_decoder_release(VSLDecoder* decoder);
 
 #ifdef __cplusplus
 }

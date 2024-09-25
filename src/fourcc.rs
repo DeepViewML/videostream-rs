@@ -5,7 +5,6 @@
 use core::{fmt, result::Result};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "zerocopy", derive(zerocopy::FromBytes, zerocopy::AsBytes))]
 #[repr(C, packed)]
 pub struct FourCC(pub [u8; 4]);
 
