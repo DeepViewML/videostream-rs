@@ -29,7 +29,7 @@ impl Host {
             return Err(Box::new(err));
         }
 
-        return Ok(Host { ptr });
+        Ok(Host { ptr })
     }
 
     pub fn path(&self) -> Result<PathBuf, Box<dyn Error>> {
@@ -39,7 +39,7 @@ impl Host {
         }
 
         let path_str = unsafe { CStr::from_ptr(path_str_c).to_str()? };
-        return Ok(PathBuf::from(path_str));
+        Ok(PathBuf::from(path_str))
     }
 
     pub fn poll(&self) {}

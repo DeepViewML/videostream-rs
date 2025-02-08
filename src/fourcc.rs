@@ -27,12 +27,12 @@ impl FourCC {
     }
 }
 
-impl<'a> From<&'a [u8; 4]> for FourCC {
+impl From<&[u8; 4]> for FourCC {
     fn from(buf: &[u8; 4]) -> FourCC {
         FourCC([buf[0], buf[1], buf[2], buf[3]])
     }
 }
-impl<'a> From<&'a [u8]> for FourCC {
+impl From<&[u8]> for FourCC {
     fn from(buf: &[u8]) -> FourCC {
         FourCC([buf[0], buf[1], buf[2], buf[3]])
     }

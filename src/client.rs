@@ -28,7 +28,7 @@ impl Client {
             return Err(Box::new(err));
         }
 
-        return Ok(Client { ptr });
+        Ok(Client { ptr })
     }
 
     pub fn release(&self) {
@@ -50,7 +50,7 @@ impl Client {
             let path_ref = p_cstr.to_str().unwrap();
             return Ok(path_ref);
         }
-        return Err(());
+        Err(())
     }
 
     pub fn set_timeout(&self, timeout: f32) {
@@ -63,7 +63,7 @@ impl Client {
             let err = io::Error::last_os_error();
             return Err(Box::new(err));
         }
-        return Ok(Frame::wrap(frame).unwrap());
+        Ok(Frame::wrap(frame).unwrap())
     }
 }
 

@@ -26,38 +26,38 @@ pub enum VSLEncoderProfileEnum {
 
 impl VSLRect {
     pub fn new(x: c_int, y: c_int, width: c_int, height: c_int) -> Self {
-        return VSLRect {
+        VSLRect {
             rect: ffi::vsl_rect {
                 x,
                 y,
                 width,
                 height,
             },
-        };
+        }
     }
 
     pub fn get_width(&self) -> c_int {
-        return (self.rect).width;
+        (self.rect).width
     }
 
     pub fn get_height(&self) -> c_int {
-        return (self.rect).height;
+        (self.rect).height
     }
 
     pub fn get_x(&self) -> c_int {
-        return (self.rect).x;
+        (self.rect).x
     }
 
     pub fn get_y(&self) -> c_int {
-        return (self.rect).y;
+        (self.rect).y
     }
 }
 
 impl Encoder {
     pub fn create(profile: u32, output_fourcc: u32, fps: c_int) -> Self {
-        return Encoder {
+        Encoder {
             ptr: unsafe { ffi::vsl_encoder_create(profile, output_fourcc, fps) },
-        };
+        }
     }
 
     pub fn new_output_frame(
@@ -75,9 +75,9 @@ impl Encoder {
             return Err(Box::new(NullStringError {}));
         }
         match frame_ptr.try_into() {
-            Ok(frame) => return Ok(frame),
-            Err(()) => return Err(Box::new(NullStringError {})),
-        };
+            Ok(frame) => Ok(frame),
+            Err(()) => Err(Box::new(NullStringError {})),
+        }
     }
 
     pub fn frame(
@@ -87,7 +87,7 @@ impl Encoder {
         crop_region: &VSLRect,
         keyframe: *mut c_int,
     ) -> i32 {
-        return unsafe {
+        unsafe {
             ffi::vsl_encode_frame(
                 self.ptr,
                 source.get_ptr(),
@@ -95,7 +95,7 @@ impl Encoder {
                 &crop_region.rect,
                 keyframe,
             )
-        };
+        }
     }
 }
 

@@ -35,7 +35,7 @@ impl Frame {
         }
         let mut fourcc: u32 = 0;
         for i in 0..buf.len() {
-            fourcc += (buf[i] as u32) << i * 8;
+            fourcc += (buf[i] as u32) << (i * 8);
         }
 
         let ptr = unsafe {
@@ -46,7 +46,7 @@ impl Frame {
             let err = io::Error::last_os_error();
             return Err(Box::new(err));
         }
-        return Ok(Frame { ptr });
+        Ok(Frame { ptr })
     }
 
     pub fn alloc(&self, path: Option<&Path>) -> Result<(), Box<dyn Error>> {
@@ -63,7 +63,7 @@ impl Frame {
             let err = io::Error::last_os_error();
             return Err(Box::new(err));
         }
-        return Ok(());
+        Ok(())
     }
 
     pub fn wrap(ptr: *mut ffi::VSLFrame) -> Result<Self, ()> {
@@ -71,12 +71,12 @@ impl Frame {
             return Err(());
         }
 
-        return Ok(Frame { ptr });
+        Ok(Frame { ptr })
     }
 
     pub fn wait(client: &client::Client, until: i64) -> Result<Self, Box<dyn Error>> {
         let wrapper = client.get_frame(until)?;
-        return Ok(Frame { ptr: wrapper.ptr });
+        Ok(Frame { ptr: wrapper.ptr })
     }
 
     pub fn trylock(&self) -> Result<(), Box<dyn Error>> {
@@ -85,7 +85,7 @@ impl Frame {
             let err = io::Error::last_os_error();
             return Err(Box::new(err));
         }
-        return Ok(());
+        Ok(())
     }
 
     pub fn unlock(&self) -> Result<(), Box<dyn Error>> {
@@ -93,7 +93,7 @@ impl Frame {
             let err = io::Error::last_os_error();
             return Err(Box::new(err));
         }
-        return Ok(());
+        Ok(())
     }
 
     pub fn sync(&self, enable: bool, mode: i32) -> Result<(), Box<dyn Error>> {
@@ -102,50 +102,50 @@ impl Frame {
             let err = io::Error::last_os_error();
             return Err(Box::new(err));
         }
-        return Ok(());
+        Ok(())
     }
 
     pub fn serial(&self) -> i64 {
-        return unsafe { ffi::vsl_frame_serial(self.ptr) };
+        unsafe { ffi::vsl_frame_serial(self.ptr) }
     }
 
     pub fn timestamp(&self) -> i64 {
         let timestamp: i64 = unsafe { ffi::vsl_frame_timestamp(self.ptr) };
-        return timestamp;
+        timestamp
     }
 
     pub fn duration(&self) -> i64 {
-        return unsafe { ffi::vsl_frame_duration(self.ptr) };
+        unsafe { ffi::vsl_frame_duration(self.ptr) }
     }
 
     pub fn pts(&self) -> i64 {
-        return unsafe { ffi::vsl_frame_pts(self.ptr) };
+        unsafe { ffi::vsl_frame_pts(self.ptr) }
     }
 
     pub fn dts(&self) -> i64 {
-        return unsafe { ffi::vsl_frame_dts(self.ptr) };
+        unsafe { ffi::vsl_frame_dts(self.ptr) }
     }
 
     pub fn expires(&self) -> i64 {
-        return unsafe { ffi::vsl_frame_expires(self.ptr) };
+        unsafe { ffi::vsl_frame_expires(self.ptr) }
     }
 
     pub fn fourcc(&self) -> u32 {
-        return unsafe { ffi::vsl_frame_fourcc(self.ptr) };
+        unsafe { ffi::vsl_frame_fourcc(self.ptr) }
     }
 
     pub fn width(&self) -> i32 {
         let width: std::os::raw::c_int = unsafe { ffi::vsl_frame_width(self.ptr) };
-        return width as i32;
+        width as i32
     }
 
     pub fn height(&self) -> i32 {
         let height: std::os::raw::c_int = unsafe { ffi::vsl_frame_height(self.ptr) };
-        return height as i32;
+        height as i32
     }
 
     pub fn size(&self) -> i32 {
-        return unsafe { ffi::vsl_frame_size(self.ptr) as i32 }; //Needs work
+        unsafe { ffi::vsl_frame_size(self.ptr) as i32 } //Needs work
     }
 
     /*
@@ -156,7 +156,7 @@ impl Frame {
 
     pub fn handle(&self) -> i32 {
         let handle: std::os::raw::c_int = unsafe { ffi::vsl_frame_handle(self.ptr) };
-        return handle as i32;
+        handle as i32
     }
 
     pub fn paddr(&self) -> Option<isize> {
@@ -164,7 +164,7 @@ impl Frame {
         if ret == -1 {
             return None;
         }
-        return Some(ret);
+        Some(ret)
     }
 
     pub fn path(&self) -> Option<&str> {
@@ -180,7 +180,7 @@ impl Frame {
                 }
             }
         };
-        return Some(path);
+        Some(path)
     }
 
     pub fn mmap(&self) -> Result<&[u8], ()> {
@@ -188,7 +188,7 @@ impl Frame {
         if ptr.is_null() || self.size() == 0 {
             return Err(());
         }
-        return Ok(unsafe { slice::from_raw_parts(ptr as *const u8, self.size() as usize) });
+        Ok(unsafe { slice::from_raw_parts(ptr as *const u8, self.size() as usize) })
     }
 
     pub fn mmap_mut(&self) -> Result<&mut [u8], ()> {
@@ -197,11 +197,11 @@ impl Frame {
         if ptr.is_null() || size == 0 {
             return Err(());
         }
-        return Ok(unsafe { slice::from_raw_parts_mut(ptr as *mut u8, size) });
+        Ok(unsafe { slice::from_raw_parts_mut(ptr as *mut u8, size) })
     }
 
     pub fn munmap(&self) {
-        return unsafe { ffi::vsl_frame_munmap(self.ptr) };
+        unsafe { ffi::vsl_frame_munmap(self.ptr) }
     }
 
     pub fn attach(&self, fd: RawFd, size: usize, offset: usize) -> Result<(), Box<dyn Error>> {
@@ -210,11 +210,11 @@ impl Frame {
             let err = io::Error::last_os_error();
             return Err(Box::new(err));
         }
-        return Ok(());
+        Ok(())
     }
 
     pub fn get_ptr(&self) -> *mut ffi::VSLFrame {
-        return self.ptr.clone();
+        self.ptr
     }
 }
 
@@ -225,27 +225,24 @@ impl TryFrom<*mut ffi::VSLFrame> for Frame {
         if ptr.is_null() {
             return Err(());
         }
-        return Ok(Frame { ptr });
+        Ok(Frame { ptr })
     }
 }
 impl TryFrom<&CameraBuffer<'_>> for Frame {
     type Error = Box<dyn Error>;
 
     fn try_from(buf: &CameraBuffer<'_>) -> Result<Self, Self::Error> {
-        let frame = match Frame::new(
+        let frame = Frame::new(
             buf.width().try_into().unwrap(),
             buf.height().try_into().unwrap(),
             0,
             buf.format().to_string().as_str(),
-        ) {
-            Ok(f) => f,
-            Err(e) => return Err(e),
-        };
+        )?;
         match frame.attach(buf.fd().as_raw_fd(), 0, 0) {
             Ok(_) => (),
             Err(e) => return Err(e),
         }
-        return Ok(frame);
+        Ok(frame)
     }
 }
 
@@ -339,7 +336,7 @@ mod tests {
         for i in 0..mem.len() {
             assert_eq!(mem[i], expect[i])
         }
-        if let Err(_) = fs::remove_file("./temp.txt") {
+        if fs::remove_file("./temp.txt").is_err() {
             panic!("Test succeeded but file \"./temp.txt\" was not deleted");
         }
     }
@@ -348,18 +345,12 @@ mod tests {
     fn bad_attach() {
         let frame = Frame::new(640, 480, 0, "RGB3").unwrap();
 
-        match frame.attach(-1, 1 as usize, 0) {
-            Ok(_) => {
-                panic!("Failed")
-            }
-            Err(_) => {}
+        if frame.attach(-1, 1_usize, 0).is_ok() {
+            panic!("Failed")
         };
 
-        match frame.attach(9000, 1 as usize, 0) {
-            Ok(_) => {
-                panic!("Failed")
-            }
-            Err(_) => {}
+        if frame.attach(9000, 1_usize, 0).is_ok() {
+            panic!("Failed")
         };
     }
 

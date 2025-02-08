@@ -46,7 +46,7 @@ impl fmt::Display for NullStringError {
 
 pub fn version() -> &'static str {
     let cstr = unsafe { CStr::from_ptr(ffi::vsl_version()) };
-    return cstr.to_str().unwrap();
+    cstr.to_str().unwrap()
 }
 
 pub fn timestamp() -> i64 {

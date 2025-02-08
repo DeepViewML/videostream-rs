@@ -27,9 +27,9 @@ pub enum DecodeReturnCode {
 
 impl Decoder {
     pub fn create(input_codec: DecoderInputCodec, fps: c_int) -> Self {
-        return Decoder {
+        Decoder {
             ptr: unsafe { ffi::vsl_decoder_create(input_codec as u32, fps) },
-        };
+        }
     }
 
     pub fn width(&self) -> i32 {

@@ -162,6 +162,7 @@ pub fn create_camera() -> Camera {
     Camera::default()
 }
 
+#[derive(Debug)]
 pub struct CameraReader {
     ptr: *mut ffi::vsl_camera,
     width: i32,
@@ -320,6 +321,7 @@ impl Drop for CameraReader {
     }
 }
 
+#[derive(Debug)]
 pub struct CameraBuffer<'a> {
     raw_fd: RawFd,
     ptr: *mut ffi::vsl_camera_buffer,
