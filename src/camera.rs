@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025 Au-Zone Technologies
+
 use crate::fourcc::FourCC;
 use dma_buf::DmaBuf;
 use std::{
@@ -300,7 +303,7 @@ impl CameraReader {
         self.format
     }
 
-    pub fn read(&self) -> Result<CameraBuffer, Box<dyn Error>> {
+    pub fn read(&self) -> Result<CameraBuffer<'_>, Box<dyn Error>> {
         let ptr = unsafe { ffi::vsl_camera_get_data(self.ptr) };
         if ptr.is_null() {
             let err = io::Error::last_os_error();
@@ -332,7 +335,7 @@ impl CameraBuffer<'_> {
     fn new(
         ptr: *mut ffi::vsl_camera_buffer,
         parent: &CameraReader,
-    ) -> Result<CameraBuffer, Box<dyn Error>> {
+    ) -> Result<CameraBuffer<'_>, Box<dyn Error>> {
         let original_fd: RawFd = unsafe { ffi::vsl_camera_buffer_dma_fd(ptr) };
         Ok(CameraBuffer {
             raw_fd: original_fd,

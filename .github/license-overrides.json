@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Manual license verifications for packages with missing or incorrect license metadata in their package manifests. Each entry documents the manually verified license based on source repository inspection.",
+  "overrides": [
+    {
+      "name": "dma-buf",
+      "version": "0.4.0",
+      "license": "MIT",
+      "verification": {
+        "date": "2025-11-14",
+        "method": "Repository inspection",
+        "source": "https://github.com/Smithay/dma-buf-rs",
+        "notes": "Repository clearly shows MIT license. Older version 0.4.0 may have incomplete Cargo.toml metadata. Consider upgrading to 0.5.0+ for better metadata."
+      }
+    }
+  ]
+}

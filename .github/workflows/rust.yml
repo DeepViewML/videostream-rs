@@ -26,6 +26,26 @@ jobs:
       - name: Check
         run: cargo +$RUSTV fmt -- --check
 
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+          override: true
+      - name: Install Dependencies
+        run: |
+          curl https://deepviewml.com/apt/key.pub | sudo gpg --dearmor -o /usr/share/keyrings/deepviewml.gpg
+          echo 'deb [signed-by=/usr/share/keyrings/deepviewml.gpg] https://deepviewml.com/apt stable main' | sudo tee /etc/apt/sources.list.d/deepviewml.list
+          sudo apt-get update
+          sudo apt-get install libvideostream
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -40,10 +60,64 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
 
+  sbom-compliance:
+    name: SBOM Generation & License Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install cargo-cyclonedx
+        run: cargo install cargo-cyclonedx
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install scancode-toolkit
+        run: |
+          python3 -m venv venv
+          venv/bin/pip install --upgrade pip
+          venv/bin/pip install scancode-toolkit
+
+      - name: Install CycloneDX CLI
+        run: |
+          mkdir -p ~/.local/bin
+          wget -q -O ~/.local/bin/cyclonedx \
+            https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.27.1/cyclonedx-linux-x64
+          chmod +x ~/.local/bin/cyclonedx
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Generate Complete SBOM
+        run: .github/scripts/generate_sbom.sh
+
+      - name: Upload SBOM Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: |
+            sbom.json
+            NOTICE
+          retention-days: 90
+
+      - name: Fail on License Violations
+        if: failure()
+        run: |
+          echo "❌ License policy check failed!"
+          echo "Review the SBOM generation output above for details."
+          exit 1
+
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    needs: [test, format]
+    needs: [test, format, clippy]
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     steps:
       - uses: actions/checkout@v4

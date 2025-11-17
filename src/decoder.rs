@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025 Au-Zone Technologies
+
 use crate::{encoder::VSLRect, frame::Frame, Error};
 use std::{
     ffi::{c_int, c_void},
@@ -65,13 +68,9 @@ impl Decoder {
                 output_frame_ptr,
             )
         };
-        let output_frame = match Frame::wrap(output_frame) {
-            Ok(v) => Some(v),
-            Err(_) => None,
-        };
+        let output_frame = Frame::wrap(output_frame).ok();
         if ret_code & VSLDecoderRetCode_VSL_DEC_ERR > 0 {
-            return Err(Box::new(io::Error::new(
-                io::ErrorKind::Other,
+            return Err(Box::new(io::Error::other(
                 "Decoder Error",
             )));
         }

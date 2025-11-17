@@ -1,7 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025 Au-Zone Technologies
+
 use crate::frame::Frame;
 use std::{
     error::Error,
-    ffi::{c_void, CStr, CString},
+    ffi::{CStr, CString},
     io,
 };
 use videostream_sys as ffi;
@@ -19,7 +22,7 @@ impl Client {
         let ptr = unsafe {
             ffi::vsl_client_init(
                 path_str_c.as_ptr(),
-                std::ptr::null_mut() as *mut c_void,
+                std::ptr::null_mut(),
                 reconnect,
             )
         };
@@ -43,6 +46,7 @@ impl Client {
         panic!("CURRENTLY NOT USED");
     }
 
+    #[allow(clippy::result_unit_err)]
     pub fn path(&self) -> Result<&str, ()> {
         let path_ptr = unsafe { ffi::vsl_client_path(self.ptr) };
         if !path_ptr.is_null() {

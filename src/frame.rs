@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025 Au-Zone Technologies
+
 use crate::{camera::CameraBuffer, client};
 use std::{
     error::Error,
@@ -34,8 +37,8 @@ impl Frame {
             return Err("fourcc must be 4 character ascii code".into());
         }
         let mut fourcc: u32 = 0;
-        for i in 0..buf.len() {
-            fourcc += (buf[i] as u32) << (i * 8);
+        for (i, &byte) in buf.iter().enumerate() {
+            fourcc += (byte as u32) << (i * 8);
         }
 
         let ptr = unsafe {
@@ -66,6 +69,7 @@ impl Frame {
         Ok(())
     }
 
+    #[allow(clippy::result_unit_err)]
     pub fn wrap(ptr: *mut ffi::VSLFrame) -> Result<Self, ()> {
         if ptr.is_null() {
             return Err(());
@@ -183,6 +187,7 @@ impl Frame {
         Some(path)
     }
 
+    #[allow(clippy::result_unit_err)]
     pub fn mmap(&self) -> Result<&[u8], ()> {
         let ptr = unsafe { ffi::vsl_frame_mmap(self.ptr, std::ptr::null_mut::<usize>()) };
         if ptr.is_null() || self.size() == 0 {
@@ -191,6 +196,12 @@ impl Frame {
         Ok(unsafe { slice::from_raw_parts(ptr as *const u8, self.size() as usize) })
     }
 
+    /// # Safety
+    /// This function returns a mutable reference from an immutable `&self` reference.
+    /// This is safe because the underlying memory is memory-mapped and managed by the
+    /// FFI layer. Callers must ensure they follow proper synchronization patterns when
+    /// accessing the mmap'd memory from multiple threads.
+    #[allow(clippy::mut_from_ref, clippy::result_unit_err)]
     pub fn mmap_mut(&self) -> Result<&mut [u8], ()> {
         let mut size: usize = 0;
         let ptr = unsafe { ffi::vsl_frame_mmap(self.ptr, &mut size as *mut usize) };
@@ -279,9 +290,9 @@ mod tests {
         assert_eq!(frame.size(), 640 * 480 * 3);
 
         let mem: &mut [u8] = frame.mmap_mut().unwrap();
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         for elem in &mut *mem {
-            let num: u8 = rng.gen();
+            let num: u8 = rng.random();
             *elem = num;
         }
         let mem2 = frame.mmap().unwrap();
@@ -299,7 +310,7 @@ mod tests {
         }
 
         for elem in &mut *v2 {
-            let num: u8 = rng.gen();
+            let num: u8 = rng.random();
             *elem = num;
         }
         assert_eq!(mem[0], v2[0]);
@@ -311,14 +322,15 @@ mod tests {
         let frame = Frame::new(640, 480, 0, "RGB3").unwrap();
 
         let mut expect = Vec::new();
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         for _ in 0..(frame.height() * frame.width() * 3) {
-            expect.push(rng.gen::<u8>() as u8);
+            expect.push(rng.random::<u8>() as u8);
         }
         let mut file = File::options()
             .read(true)
             .write(true)
             .create(true)
+            .truncate(true)
             .open("./temp.txt")
             .unwrap();
         file.write_all(&expect).unwrap();

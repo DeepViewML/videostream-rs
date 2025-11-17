@@ -1,6 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025 Au-Zone Technologies
+//
 // Taken from https://docs.rs/crate/four-cc/latest and adapted to handle endianess.
 #![forbid(unsafe_code)]
-#![cfg_attr(feature = "nightly", feature(const_trait_impl))]
 
 use core::{fmt, result::Result};
 
@@ -9,7 +11,7 @@ use core::{fmt, result::Result};
 pub struct FourCC(pub [u8; 4]);
 
 impl FourCC {
-    const fn from_u32(self) -> u32 {
+    const fn to_u32(self) -> u32 {
         #[cfg(target_endian = "little")]
         {
             ((self.0[3] as u32) << 24 & 0xff000000)
@@ -60,29 +62,11 @@ impl From<u32> for FourCC {
     }
 }
 
-// The macro is needed, because the `impl const` syntax doesn't exists on
-// `stable`.
-#[cfg(not(feature = "nightly"))]
-macro_rules! from_fourcc_for_u32 {
-    () => {
-        impl From<FourCC> for u32 {
-            fn from(val: FourCC) -> Self {
-                val.from_u32()
-            }
-        }
-    };
+impl From<FourCC> for u32 {
+    fn from(val: FourCC) -> Self {
+        val.to_u32()
+    }
 }
-#[cfg(feature = "nightly")]
-macro_rules! from_fourcc_for_u32 {
-    ($($t:tt)*) => {
-        impl const From<FourCC> for u32 {
-            fn from(val: FourCC) -> Self {
-                val.from_u32()
-            }
-        }
-    };
-}
-from_fourcc_for_u32!();
 
 impl fmt::Display for FourCC {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {

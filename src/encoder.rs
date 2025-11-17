@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025 Au-Zone Technologies
+
 use crate::{frame, NullStringError};
 use std::{error::Error, os::raw::c_int};
 use videostream_sys as ffi;
@@ -80,7 +83,9 @@ impl Encoder {
         }
     }
 
-    pub fn frame(
+    /// # Safety
+    /// The caller must ensure that `keyframe` is either null or points to a valid `c_int`.
+    pub unsafe fn frame(
         &self,
         source: &frame::Frame,
         destination: &frame::Frame,

@@ -1,12 +1,12 @@
 [package]
 name = "videostream-sys"
-description = "Low-level FFI bindings for VideoStream Library"
+description = "Low-level FFI bindings for VideoStream Library - unsafe bindings to libvideostream"
 readme = "README.md"
-license = "AGPL-3.0"
-homepage = "https://support.deepviewml.com"
+license = "Apache-2.0"
+homepage = "https://edgefirst.ai"
 repository = "https://github.com/DeepViewML/videostream-rs"
-documentation = "https://docs.rs/videostream"
-keywords = ["deepview", "visionpack"]
+documentation = "https://docs.rs/videostream-sys"
+keywords = ["video", "ffi", "bindings", "videostream", "libvideostream"]
 categories = ["computer-vision", "multimedia::video", "external-ffi-bindings"]
 version = "0.0.0"
 edition = "2021"
