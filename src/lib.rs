@@ -8,7 +8,8 @@
 //!
 //! The VideoStream Library enables efficient frame sharing through DMA buffers
 //! or shared-memory with signaling over UNIX Domain Sockets, optimized for
-//! edge AI and computer vision applications on resource-constrained embedded devices.
+//! edge AI and computer vision applications on resource-constrained embedded
+//! devices.
 //!
 //! # Quick Start
 //!

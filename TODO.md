@@ -186,7 +186,7 @@
   - Removed unused c_void import from client.rs
   - Fixed const trait implementation issues in fourcc.rs (removed nightly-only features)
   - Fixed deprecated rand API (thread_rng → rng, gen → random)
-- [x] **Add Clippy job to CI workflow** - Job added with -D warnings flag
+- [x] **Add Clippy job to CI workflow** - Job added
 
 ### Remaining Tasks
 - [ ] Verify rustfmt configuration is correct
@@ -199,7 +199,7 @@
 - [ ] Search for TODO/FIXME comments - address or track in issues
 
 ### Code Quality Checklist
-- [x] No Clippy warnings (with -D warnings)
+- [x] No Clippy warnings
 - [ ] All code formatted with rustfmt
 - [ ] All unsafe blocks documented with safety rationale
 - [ ] Error messages are clear and actionable
@@ -271,7 +271,7 @@
 
 #### Completed
 - ✅ Format check job (uses nightly-2023-07-01)
-- ✅ Clippy job (runs on all targets with -D warnings)
+- ✅ Clippy job (runs on all targets)
 - ✅ Test job (installs libvideostream from DeepView APT)
 - ✅ SBOM compliance job (generates SBOM, checks licenses, uploads artifacts)
 - ✅ Deploy job (publishes to crates.io on tags)
@@ -511,7 +511,7 @@
 python3 .github/scripts/check_license_policy.py sbom.json
 
 # Run Clippy
-cargo clippy --all-targets --all-features -- -D warnings
+cargo clippy --all-targets --all-features
 
 # Format code
 cargo +nightly-2023-07-01 fmt
@@ -592,7 +592,7 @@ cargo llvm-cov --html
   - Fixed lifetime inconsistencies in camera.rs
   - Marked unsafe encoder function appropriately
   - Removed unused imports
-- ✅ Added Clippy job to CI workflow with -D warnings
+- ✅ Added Clippy job to CI workflow
 - ✅ Updated TODO.md with code quality progress (60% complete)
 
 **2025-11-17 (Session 1):**

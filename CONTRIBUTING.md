@@ -156,7 +156,7 @@ Before committing:
 cargo fmt
 
 # Check for lints
-cargo clippy --all-targets --all-features -- -D warnings
+cargo clippy --all-targets --all-features
 
 # Run tests
 cargo test

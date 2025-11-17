@@ -197,10 +197,11 @@ impl Frame {
     }
 
     /// # Safety
-    /// This function returns a mutable reference from an immutable `&self` reference.
-    /// This is safe because the underlying memory is memory-mapped and managed by the
-    /// FFI layer. Callers must ensure they follow proper synchronization patterns when
-    /// accessing the mmap'd memory from multiple threads.
+    /// This function returns a mutable reference from an immutable `&self`
+    /// reference. This is safe because the underlying memory is
+    /// memory-mapped and managed by the FFI layer. Callers must ensure they
+    /// follow proper synchronization patterns when accessing the mmap'd
+    /// memory from multiple threads.
     #[allow(clippy::mut_from_ref, clippy::result_unit_err)]
     pub fn mmap_mut(&self) -> Result<&mut [u8], ()> {
         let mut size: usize = 0;

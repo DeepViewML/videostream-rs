@@ -70,9 +70,7 @@ impl Decoder {
         };
         let output_frame = Frame::wrap(output_frame).ok();
         if ret_code & VSLDecoderRetCode_VSL_DEC_ERR > 0 {
-            return Err(Box::new(io::Error::other(
-                "Decoder Error",
-            )));
+            return Err(Box::new(io::Error::other("Decoder Error")));
         }
         let mut return_msg = DecodeReturnCode::Success;
         if ret_code & VSLDecoderRetCode_VSL_DEC_FRAME_DEC > 0 {

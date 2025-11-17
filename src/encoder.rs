@@ -84,7 +84,8 @@ impl Encoder {
     }
 
     /// # Safety
-    /// The caller must ensure that `keyframe` is either null or points to a valid `c_int`.
+    /// The caller must ensure that `keyframe` is either null or points to a
+    /// valid `c_int`.
     pub unsafe fn frame(
         &self,
         source: &frame::Frame,

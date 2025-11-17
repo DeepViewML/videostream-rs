@@ -19,13 +19,8 @@ unsafe impl Sync for Client {}
 impl Client {
     pub fn new(path: &str, reconnect: bool) -> Result<Self, Box<dyn Error>> {
         let path_str_c = CString::new(path)?;
-        let ptr = unsafe {
-            ffi::vsl_client_init(
-                path_str_c.as_ptr(),
-                std::ptr::null_mut(),
-                reconnect,
-            )
-        };
+        let ptr =
+            unsafe { ffi::vsl_client_init(path_str_c.as_ptr(), std::ptr::null_mut(), reconnect) };
         if ptr.is_null() {
             let err = io::Error::last_os_error();
             return Err(Box::new(err));
